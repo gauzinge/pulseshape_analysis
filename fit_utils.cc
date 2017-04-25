@@ -30,6 +30,11 @@ double fdeconv_convoluted (double* x, double* par)
     return 1.2131 * fpeak_convoluted (&xp, par) - 1.4715 * fpeak_convoluted (&xz, par) + 0.4463 * fpeak_convoluted (&xm, par);
 }
 
+void correctDistribution (TH1* h)
+{
+    h->Scale (-1);
+}
+
 //float maximum ( TH1* h )
 //{
 //int bin = h->GetMaximumBin();
