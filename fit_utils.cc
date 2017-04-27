@@ -1,6 +1,13 @@
 #include <TF1.h>
 #include <TMath.h>
 
+double testfunc (double* x, double* par)
+{
+    if (x[0] + par[2] < 0) return par[0];
+
+    return (par[0] / (1 + TMath::Exp (-par[1] * (x[0] - par[2]) ) ) + par[3]) + (par[4] + par[5] * (x[0] - par[6]) * TMath::Exp (- (x[0] - par[6]) / par[7]) );
+}
+
 double fpeak (double* x, double* par)
 {
     if (x[0] + par[1] < 0) return par[0];
@@ -19,7 +26,7 @@ double fdeconv (double* x, double* par)
 double fpeak_convoluted (double* x, double* par)
 {
     TF1 f ("peak_convoluted", fpeak, 0, 200, 4);
-    return f.IntegralError (x[0] - par[4] / 2., x[0] + par[4] / 2., par, 0, 1.) / (par[4]);
+    return f.IntegralError (x[0] - par[4] / 2., x[0] + par[4] / 2., par) / (par[4]);
 }
 
 double fdeconv_convoluted (double* x, double* par)
