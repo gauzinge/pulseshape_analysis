@@ -44,15 +44,32 @@ TH1F* getHist (std::string pDirectory, int pChannel)
 
 struct pulse_parameters
 {
+    pulse_parameters (std::string pMode) : mode (pMode),
+        turn_on_time (0),
+        peak_time (0),
+        rise_time (0),
+        time_constant (0),
+        undershoot_time (0),
+        baseline (0),
+        max_pulseheight (0),
+        amplitude (0),
+        tail_amplitude (0),
+        undershoot (0),
+        chi2 (0)
+    {    }
+
+    std::string mode;
     float turn_on_time;
     float peak_time;
     float rise_time; //peak time-turn_on_time
     float time_constant;
+    float undershoot_time;
 
     float baseline;
     float max_pulseheight;
     float amplitude; //max_pulseheight-turn_on_time
     float tail_amplitude; //125ns after maximum
+    float undershoot;
 
     float chi2;
 
@@ -60,6 +77,30 @@ struct pulse_parameters
     {
         rise_time = peak_time - turn_on_time;
         amplitude = max_pulseheight - baseline;
+
+        if (mode == "Peak")
+        {
+            undershoot_time = 0;
+            undershoot = 0;
+        }
+
+        std::cout << "***************************************" << std::endl;
+        std::cout << "PULSESHAPE PARAMETERS: " << mode << " Mode" << std::endl;
+        std::cout << "***************************************" << std::endl;
+        std::cout << "Turn-on-Time : " << turn_on_time << " ns" << std::endl;
+        std::cout << "Peak-Time    : " << peak_time << " ns" << std::endl;
+        std::cout << "Rise-Time    : " << rise_time << " ns" << std::endl;
+        std::cout << "t_Undershoot : " << undershoot_time << " ns" << std::endl;
+        std::cout << "Time-Constant: " << time_constant << " ns" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Baseline     : " << baseline << " ADC" << std::endl;
+        std::cout << "Pulseheight  : " << max_pulseheight << " ADC" << std::endl;
+        std::cout << "Amplitude    : " << amplitude << " ADC" << std::endl;
+        std::cout << "Undershoot   : " << undershoot << " ADC" << std::endl;
+        std::cout << "TailAmpli    : " << tail_amplitude << " ADC" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Chi2/NDF     : " << chi2 << std::endl;
+        std::cout << "***************************************" << std::endl;
     }
 };
 
@@ -73,7 +114,7 @@ TF1* fitTurnOn ( TH1* pHist, float pAmplitude, float pBoundary, pulse_parameters
     sigmoid->SetParLimits (2, pBoundary - 20, pBoundary + 20);//turn on
     sigmoid->SetParLimits (3, -pAmplitude / 10., pAmplitude / 10.);//baseline
     sigmoid->SetParameters (pAmplitude / 2., 0.1, pBoundary, 0.);
-    pHist->Fit (sigmoid, "MR+");
+    pHist->Fit (sigmoid, "MRQ+");
 
     // return the point where the fit = 3% signal.
     float time = 0.;
@@ -91,21 +132,33 @@ TF1* fitTail (TH1F* pHist, float pAmplitude, float pBoundary, std::string pMode,
     TF1* cFit = nullptr;
 
     if (pMode == "Deco")
-        //cFit = new TF1 ("fit_deco", fdeconv_convoluted, -50, 50, 5);
         cFit = new TF1 ("fit_deco", fdeconv, pBoundary, 200, 5);
     else
         cFit = new TF1 ("fit_peak", fpeak, pBoundary, 200, 4);
 
-    //cFit = new TF1 ("fit_peak", fpeak_convoluted, 0, 200, 5);
-    //cFit = new TF1 ("fit_peak", fpeak, pBoundary, 200, 4);
 
     cFit->SetParLimits (0, -100, 500);//baseline
-    cFit->SetParLimits (1, -100, 0);//turn on time
+    cFit->SetParLimits (1, -200, 0);//turn on time
     cFit->SetParLimits (2, 0, 500);//scale
     cFit->SetParLimits (3, 5, 100);//timeconstant
-    cFit->SetParameters (150, -35, 180, 45);
+    //cFit->SetParameters (150, -35, 180, 45);
 
-    pHist->Fit (cFit, "RM+");
+    pHist->Fit (cFit, "MRQ+");
+
+    pPulseParam.peak_time = cFit->GetMaximumX();
+    pPulseParam.max_pulseheight = cFit->GetMaximum();
+    pPulseParam.undershoot = cFit->GetMinimum();
+    pPulseParam.undershoot_time = cFit->GetMinimumX();
+
+    pPulseParam.time_constant = cFit->GetParameter (3);
+
+    if (pPulseParam.peak_time + 125 < 200)
+        pPulseParam.tail_amplitude = cFit->Eval (pPulseParam.peak_time + 125);
+    else
+        pPulseParam.tail_amplitude = cFit->Eval (200);
+
+    pPulseParam.chi2 = cFit->GetChisquare() / cFit->GetNDF();
+
     return cFit;
 }
 
@@ -120,7 +173,7 @@ void fitHist (TH1F* pHist, std::string pMode)
         pHist->SetBinError (i, error);
 
     // struct for pulse parameters
-    pulse_parameters cPulseParam;
+    pulse_parameters cPulseParam (pMode);
 
     // localize the maximum amplitude
     float cAmplitude = pHist->GetMaximum();
@@ -129,9 +182,11 @@ void fitHist (TH1F* pHist, std::string pMode)
     float cRiseBoundary = pHist->GetBinLowEdge (bin);
     TF1* cRise = fitTurnOn (pHist, cAmplitude, cRiseBoundary, cPulseParam);
 
-    bin = pHist->FindFirstBinAbove (0.6 * cAmplitude);
+    bin = pHist->FindFirstBinAbove (0.9 * cAmplitude);
     float cTailBoundary = pHist->GetBinLowEdge (bin);
     TF1* cTail = fitTail (pHist, cAmplitude, cTailBoundary, pMode, cPulseParam);
+
+    cPulseParam.compute();
 }
 
 void analyze()
@@ -140,11 +195,11 @@ void analyze()
     TH1F* cPeakBefore = getHist ("Peak_before", 0);
     fitHist (cPeakBefore, "Peak");
     TH1F* cPeakAfter = getHist ("Peak_after", 0);
-    //fitHist (cPeakAfter, "Peak");
+    fitHist (cPeakAfter, "Peak");
     cPeakAfter->SetLineColor (2);
     TH1F* cDecoAfter = getHist ("Deco_after", 0);
     cDecoAfter->SetLineColor (3);
-    //fitHist (cDecoAfter, "Deco");
+    fitHist (cDecoAfter, "Deco");
 
     TCanvas* cCanvas = new TCanvas ("comparison", "comparison");
     cCanvas->cd();
@@ -162,7 +217,8 @@ void analyze()
     //cHist->SetLineColor (i + 1);
     //fitHist (cHist, "Peak");
 
-    //if (i == 0) cHist->DrawCopy();
-    //else cHist->DrawCopy ("same");
+    //if (i == 0) cHist->DrawClone();
+    //else cHist->DrawClone ("same");
     //}
+
 }
