@@ -138,7 +138,9 @@ TF1* fitTail (TH1F* pHist, float pAmplitude, float pBoundary, std::string pMode,
 
 
     cFit->SetParLimits (0, -100, 500);//baseline
+    //cFit->FixParameter (0, pPulseParam.baseline);
     cFit->SetParLimits (1, -200, 0);//turn on time
+    //cFit->FixParameter (1, pPulseParam.turn_on_time);
     cFit->SetParLimits (2, 0, 500);//scale
     cFit->SetParLimits (3, 5, 100);//timeconstant
     //cFit->SetParameters (150, -35, 180, 45);
