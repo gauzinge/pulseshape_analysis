@@ -5,7 +5,7 @@
 #include "TF1.h"
 #include "TMath.h"
 
-#include "fit_utils.cc"
+//#include "fit_utils.cc"
 
 //double fpeak (double* x, double* par)
 //{
@@ -22,13 +22,15 @@
 //return 1.2131 * fpeak (&xp, par) - 1.5715 * fpeak (&xz, par) + 0.4063 * fpeak (&xm, par);
 //}
 
-double fdeconvtest (double* x, double* par)
-{
-    double xm = par[4] * (x[0] - 25);
-    double xp = par[4] * (x[0] + 25);
-    double xz = par[4] * x[0];
-    return 0.44 * testfunc (&xm, par) - 1.47 * testfunc (&xz, par) + 1.21 * testfunc (&xp, par);
-}
+//double fdeconvtest (double* x, double* par)
+//{
+//double xm = par[4] * (x[0] - 25);
+//double xp = par[4] * (x[0] + 25);
+//double xz = par[4] * x[0];
+//return 0.44 * testfunc (&xm, par) - 1.47 * testfunc (&xz, par) + 1.21 * testfunc (&xp, par);
+//}
+
+
 
 void testme()
 {
@@ -46,14 +48,15 @@ void testme()
     TF1* crrc = new TF1 ("crrc", "[0]+[1]*(x-[2])*exp(-(x-[2])/[3])", 0, 200);
     crrc->SetParameters (offset, crrc_scale, turn_on_time, time_const   );
 
-    TF1* a = new TF1 ("a", fdeconv, 0, 200, 5);
-    a->SetParameters (1, -65, 200, 40, 1.01);
+    //TF1* a = new TF1 ("a", fdeconv, 0, 200, 5);
+    //a->SetParameters (1, -65, 200, 40, 1.01);
     //a->SetParameters (offset, crrc_scale, turn_on_time, time_const, 20);
 
-    TF1* b = new TF1 ("b", testfunc, 0, 200, 4);
-    b->SetParameters (20, 50, -25, 100);
+    TF1* b = new TF1 ("b", "-(x-50)*exp(-(x-50)/50)", 0, 200 );
+    //b->SetParameters (20, 50, -25, 100);
+    //b->SetParameter (0, 20);
 
-    TF1* c = new TF1 ("b", fdeconvtest, 0, 200, 5);
+    TF1* c = new TF1 ("b", " 5*log(x-5)", 10, 200);
     c->SetParameters (200, 50, -25, -10);
 
 
@@ -62,7 +65,7 @@ void testme()
     //sum->SetParameters (sigmoid_max, sigmoid_scale, turn_on_time, offset, offset, crrc_scale, turn_on_time - 10, time_const);
 
     b->Draw();
-    c->Draw ("same");
+    //c->Draw ("same");
     //c->Draw();
     //sum->Draw ();
     //crrc->Draw ("same");

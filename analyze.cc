@@ -64,6 +64,7 @@ struct pulse_parameters
     float rise_time; //peak time-turn_on_time
     float time_constant;
     float undershoot_time;
+    float return_to_baseline;
 
     float baseline;
     float max_pulseheight;
@@ -91,6 +92,7 @@ struct pulse_parameters
         std::cout << "Peak-Time    : " << peak_time << " ns" << std::endl;
         std::cout << "Rise-Time    : " << rise_time << " ns" << std::endl;
         std::cout << "t_Undershoot : " << undershoot_time << " ns" << std::endl;
+        std::cout << "Back to base : " << return_to_baseline << " ns" << std::endl;
         std::cout << "Time-Constant: " << time_constant << " ns" << std::endl;
         std::cout << std::endl;
         std::cout << "Baseline     : " << baseline << " ADC" << std::endl;
@@ -114,7 +116,7 @@ TF1* fitTurnOn ( TH1* pHist, float pAmplitude, float pBoundary, pulse_parameters
     sigmoid->SetParLimits (2, pBoundary - 20, pBoundary + 20);//turn on
     sigmoid->SetParLimits (3, -pAmplitude / 10., pAmplitude / 10.);//baseline
     sigmoid->SetParameters (pAmplitude / 2., 0.1, pBoundary, 0.);
-    pHist->Fit (sigmoid, "MRQ+");
+    pHist->Fit (sigmoid, "MR+");
 
     // return the point where the fit = 3% signal.
     float time = 0.;
@@ -136,30 +138,62 @@ TF1* fitTail (TH1F* pHist, float pAmplitude, float pBoundary, std::string pMode,
     else
         cFit = new TF1 ("fit_peak", fpeak, pBoundary, 200, 4);
 
+    //cFit = new TF1 ("fit_peak", testfunc, 0, 200, 8);
 
-    cFit->SetParLimits (0, -100, 500);//baseline
-    //cFit->FixParameter (0, pPulseParam.baseline);
+
+    cFit->SetParLimits (0, -200, 500);//baseline
     cFit->SetParLimits (1, -200, 0);//turn on time
-    //cFit->FixParameter (1, pPulseParam.turn_on_time);
     cFit->SetParLimits (2, 0, 500);//scale
     cFit->SetParLimits (3, 5, 100);//timeconstant
-    //cFit->SetParameters (150, -35, 180, 45);
+    cFit->SetParameters (150, -35, 180, 45);
 
-    pHist->Fit (cFit, "MRQ+");
+    pHist->Fit (cFit, "MR+");
 
     pPulseParam.peak_time = cFit->GetMaximumX();
     pPulseParam.max_pulseheight = cFit->GetMaximum();
-    pPulseParam.undershoot = cFit->GetMinimum();
-    pPulseParam.undershoot_time = cFit->GetMinimumX();
 
     pPulseParam.time_constant = cFit->GetParameter (3);
 
-    if (pPulseParam.peak_time + 125 < 200)
-        pPulseParam.tail_amplitude = cFit->Eval (pPulseParam.peak_time + 125);
-    else
-        pPulseParam.tail_amplitude = cFit->Eval (200);
+    if (pMode != "Deco")
+    {
+        if (pPulseParam.peak_time + 125 < 200)
+            pPulseParam.tail_amplitude = cFit->Eval (pPulseParam.peak_time + 125);
+        else
+            pPulseParam.tail_amplitude = cFit->Eval (200);
+    }
 
     pPulseParam.chi2 = cFit->GetChisquare() / cFit->GetNDF();
+
+    return cFit;
+}
+
+TF1* fitUndershoot (TH1* pHist, float pMinimum, std::string pMode, pulse_parameters& pPulseParam)
+{
+    TF1* cFit = nullptr;
+
+    if (pMode == "Deco")
+    {
+        //cFit = new TF1 ("fit_deco", "log((x-[0]))", pMinimum, 200, 1);
+        cFit = new TF1 ("fit_undershoot", fdeconv_undershoot, pMinimum - 20, 300, 4);
+
+        cFit->SetParLimits (0, -500, 200);//baseline
+        cFit->SetParLimits (1, -200, 200);//turn on time
+        cFit->SetParLimits (2, 0, 500);//scale
+        cFit->SetParLimits (3, 0, 100);//timeconstant
+        cFit->SetParameters (-10, -90, 40, 110);
+        pHist->Fit (cFit, "RM+");
+
+        pPulseParam.undershoot = cFit->GetMinimum();
+        pPulseParam.undershoot_time = cFit->GetMinimumX();
+
+        if (pPulseParam.peak_time + 125 < 200)
+            pPulseParam.tail_amplitude = cFit->Eval (pPulseParam.peak_time + 125);
+        else
+            pPulseParam.tail_amplitude = cFit->Eval (200);
+
+        pPulseParam.return_to_baseline = cFit->GetX (pPulseParam.baseline);
+    }
+
 
     return cFit;
 }
@@ -187,6 +221,8 @@ void fitHist (TH1F* pHist, std::string pMode)
     bin = pHist->FindFirstBinAbove (0.9 * cAmplitude);
     float cTailBoundary = pHist->GetBinLowEdge (bin);
     TF1* cTail = fitTail (pHist, cAmplitude, cTailBoundary, pMode, cPulseParam);
+
+    TF1* cUndershoot = fitUndershoot (pHist, cTail->GetMinimumX(), pMode, cPulseParam);
 
     cPulseParam.compute();
 }
