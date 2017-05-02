@@ -50,12 +50,15 @@ struct pulse_parameters
         rise_time (0),
         time_constant (0),
         undershoot_time (0),
+        return_to_baseline (0),
         baseline (0),
         max_pulseheight (0),
         amplitude (0),
         tail_amplitude (0),
         undershoot (0),
-        chi2 (0)
+        chi2_turnon (0),
+        chi2_peak (0),
+        chi2_undershoot (0)
     {    }
 
     std::string mode;
@@ -72,7 +75,9 @@ struct pulse_parameters
     float tail_amplitude; //125ns after maximum
     float undershoot;
 
-    float chi2;
+    float chi2_turnon;
+    float chi2_peak;
+    float chi2_undershoot;
 
     void compute()
     {
@@ -101,7 +106,9 @@ struct pulse_parameters
         std::cout << "Undershoot   : " << undershoot << " ADC" << std::endl;
         std::cout << "TailAmpli    : " << tail_amplitude << " ADC" << std::endl;
         std::cout << std::endl;
-        std::cout << "Chi2/NDF     : " << chi2 << std::endl;
+        std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
+        std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
+        std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
         std::cout << "***************************************" << std::endl;
     }
 };
@@ -126,6 +133,7 @@ TF1* fitTurnOn ( TH1* pHist, float pAmplitude, float pBoundary, pulse_parameters
 
     pPulseParam.turn_on_time = time - 0.05;
     pPulseParam.baseline = sigmoid->GetParameter (3);
+    pPulseParam.chi2_turnon = sigmoid->GetChisquare() / sigmoid->GetNDF();
 
     return sigmoid;
 }
@@ -162,7 +170,7 @@ TF1* fitTail (TH1F* pHist, float pAmplitude, float pBoundary, std::string pMode,
             pPulseParam.tail_amplitude = cFit->Eval (200);
     }
 
-    pPulseParam.chi2 = cFit->GetChisquare() / cFit->GetNDF();
+    pPulseParam.chi2_peak = cFit->GetChisquare() / cFit->GetNDF();
 
     return cFit;
 }
@@ -192,6 +200,7 @@ TF1* fitUndershoot (TH1* pHist, float pMinimum, std::string pMode, pulse_paramet
             pPulseParam.tail_amplitude = cFit->Eval (200);
 
         pPulseParam.return_to_baseline = cFit->GetX (pPulseParam.baseline);
+        pPulseParam.chi2_undershoot = cFit->GetChisquare() / cFit->GetNDF();
     }
 
 
