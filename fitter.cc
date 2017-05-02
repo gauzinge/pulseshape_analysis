@@ -124,7 +124,7 @@ struct pulse_parameters
     }
 };
 
-pulse_parameters analyze_hist (TH1* pHist)
+pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
 {
     //boolen to tell me if peak mode
     bool cPeakMode;
@@ -153,12 +153,16 @@ pulse_parameters analyze_hist (TH1* pHist)
     else
         exit (1);
 
+    pGaus = (cPeakMode) ? false : pGaus;
+
     // now lets find the maximum of the histogram
     float cMaxAmplitude = pHist->GetMaximum();
     // end at 0.3 * max amplitude
     float cTurnOnLimit = pHist->GetBinCenter (pHist->FindFirstBinAbove (0.3 * cMaxAmplitude) );
     // start at 0.8 * the max amplitude
     float cPeakLimit = pHist->GetBinCenter (pHist->FindFirstBinAbove (0.8 * cMaxAmplitude) );
+    // start 20 ns before the minimum of the peak fit
+    float cUndershootLimit = pHist->GetBinCenter (pHist->GetMinimumBin() ) - 20;
 
     std::cout << cHistName << " maximum time for turn-on: " << cTurnOnLimit << " minimum time for peak: " << cPeakLimit << std::endl;
 
@@ -176,15 +180,27 @@ pulse_parameters analyze_hist (TH1* pHist)
     f_turn_on->SetLineColor (1);
 
     // fit function for the peak
-    TF1* f_peak = (cPeakMode) ? new TF1 ("fit_peak", fpeak, cPeakLimit, 200, 4) : new TF1 ("fit_deco", fdeconv, cPeakLimit, 200, 5);
-    // set the parameter limits
-    f_peak->SetParLimits (0, -200, 500);//baseline
-    f_peak->SetParLimits (1, 0, 200);//turn on time
-    f_peak->SetParLimits (2, 0, 500);//scale
-    f_peak->SetParLimits (3, 5, 100);//timeconstant
-    f_peak->SetParLimits (4, 0, 10);//scaling for sum
-    // set the initial parameter guess
-    f_peak->SetParameters (150, 35, 180, 45, 1.8);
+    TF1* f_peak = nullptr;
+
+    if (!pGaus)
+    {
+        if (cPeakMode)
+            f_peak = new TF1 ("fit_peak", fpeak, cPeakLimit, 200, 4);
+        else
+            f_peak = new TF1 ("fit_deco", fdeconv, cPeakLimit, 200, 5);
+
+        // set the parameter limits
+        f_peak->SetParLimits (0, -500, 500);//baseline
+        f_peak->SetParLimits (1, 0, 300);//turn on time
+        f_peak->SetParLimits (2, 0, 800);//scale
+        f_peak->SetParLimits (3, 5, 100);//timeconstant
+        //f_peak->SetParLimits (4, 0, 10);//scaling for sum
+        // set the initial parameter guess
+        f_peak->SetParameters (150, 35, 180, 45);
+    }
+    else
+        f_peak = new TF1 ("gaus", "gaus", cTurnOnLimit, cUndershootLimit);
+
     f_peak->SetLineColor (2);
 
     // this is a struct for holding the pulse parameters
@@ -209,7 +225,7 @@ pulse_parameters analyze_hist (TH1* pHist)
     cPulse.peak_time = f_peak->GetMaximumX();
     cPulse.max_pulseheight = f_peak->GetMaximum();
 
-    cPulse.time_constant = f_peak->GetParameter (3);
+    cPulse.time_constant = (!pGaus) ? f_peak->GetParameter (3) : 0;
     cPulse.chi2_peak = f_peak->GetChisquare() / f_peak->GetNDF();
 
     if (cPeakMode)
@@ -221,8 +237,7 @@ pulse_parameters analyze_hist (TH1* pHist)
     }
     else
     {
-        // start 20 ns before the minimum of the peak fit
-        float cUndershootLimit = f_peak->GetMinimumX() - 20;
+        //float cUndershootLimit = 100 - 20;
 
         // OK, here I am done in Peak mode but in deconvolution mode I still need
         // to fit the undershoot with a negative CR-RC
@@ -251,9 +266,14 @@ pulse_parameters analyze_hist (TH1* pHist)
             cPulse.tail_amplitude = f_undershoot->Eval (cPulse.peak_time + 125);
         else
             cPulse.tail_amplitude = f_undershoot->Eval (200);
+
+        delete f_undershoot;
     }
 
     // pulse shape completely characterized, now just compute some internals in the Pulse Parameters!
     cPulse.compute();
+    delete f_turn_on;
+    delete f_peak;
+
     return cPulse;
 }
