@@ -1,10 +1,17 @@
+#ifndef _FITTER__
+#define _FITTER__
+
 #include <string>
 
+#include "TVirtualFitter.h"
 #include <TH1.h>
 #include <TF1.h>
 #include <TMath.h>
 
-std::string gFitString = "MR+";
+#include "pulse.cc"
+
+std::string gFitString = "W LL R+";
+//std::string gFitString = "W LL R+";
 
 // sigmoid to fit the turn-on of the pulse
 // par[0]: amplitude
@@ -64,7 +71,9 @@ struct pulse_parameters
         undershoot (0),
         chi2_turnon (0),
         chi2_peak (0),
-        chi2_undershoot (0)
+        chi2_undershoot (0),
+        fit_status (0),
+        fitMode ("")
     {
     }
 
@@ -85,6 +94,8 @@ struct pulse_parameters
     float chi2_turnon;
     float chi2_peak;
     float chi2_undershoot;
+    int fit_status;
+    std::string fitMode;
 
     void compute()
     {
@@ -103,6 +114,7 @@ struct pulse_parameters
 
         std::cout << "***************************************" << std::endl;
         std::cout << "PULSESHAPE PARAMETERS: " << cModeString << " Mode" << std::endl;
+        std::cout << "Fit Mode             : " << fitMode << std::endl;
         std::cout << "***************************************" << std::endl;
         std::cout << "Turn-on-Time : " << turn_on_time << " ns" << std::endl;
         std::cout << "Peak-Time    : " << peak_time << " ns" << std::endl;
@@ -117,9 +129,19 @@ struct pulse_parameters
         std::cout << "Undershoot   : " << undershoot << " ADC" << std::endl;
         std::cout << "TailAmpli    : " << tail_amplitude << " ADC" << std::endl;
         std::cout << std::endl;
-        std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
-        std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
-        std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
+
+        if (fitMode == "analytical")
+        {
+            std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
+            std::cout << "Fit Status   : " << fit_status << std::endl;
+        }
+        else
+        {
+            std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
+            std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
+            std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
+        }
+
         std::cout << "***************************************" << std::endl;
     }
 };
@@ -205,6 +227,7 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
 
     // this is a struct for holding the pulse parameters
     pulse_parameters cPulse (cPeakMode);
+    cPulse.fitMode = "piecewise";
 
     // now fit turn-on and peak because I need this independ of the APV mode
     pHist->Fit (f_turn_on, gFitString.c_str() );
@@ -277,3 +300,128 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
 
     return cPulse;
 }
+
+pulse_parameters analyze_hist_analytical (TH1* pHist)
+{
+    //boolen to tell me if peak mode
+    bool cPeakMode;
+    pHist->Sumw2();
+    //first, format the histogram and set the scale correctly
+    pHist->Scale (-1.);
+
+    // to fit the whole pulse, also if it undershoots
+    //or has negative baseline
+    pHist->SetMinimum (-600); // to fit the whole pulse, also if it undershoots
+
+    //assign Bin errors
+    float noise = 4;
+    float N = round (pHist->GetMaximum() / 125.);
+    float error = sqrt (2 * N) * noise;
+
+    for (int i = 1; i <= pHist->GetNbinsX(); ++i)
+        pHist->SetBinError (i, error);
+
+    std::string cHistName = pHist->GetName();
+
+    //histogram was acquired in peak mode
+    if (cHistName.find ("Peak") != std::string::npos)
+        cPeakMode = true;
+    else if (cHistName.find ("Deco") != std::string::npos)
+        cPeakMode = false;
+    else
+        exit (1);
+
+    // so we have survived rescaling and mode extraction, let's fit some!
+    // this is a struct for holding the pulse parameters
+    pulse_parameters cPulse (cPeakMode);
+    cPulse.fitMode = "analytical";
+
+    // fit function for the turn_on
+    TF1* f_peak = nullptr;
+
+    if (cPeakMode)
+    {
+        f_peak = new TF1 ("fit_peak", fpulse, 5, 195, 6);
+
+        f_peak->SetParNames ("PA RC time constant x      ", "shaper RC time constant y  ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               " );
+
+        // set parameter limits
+        f_peak->SetParLimits (0, 1, 50); //x
+        f_peak->SetParLimits (1, 1, 50); //y
+        f_peak->SetParLimits (2, 40, 60);
+        //f_peak->FixParameter (2, 50);//tau
+        f_peak->SetParLimits (3, -400, 400);//baseline
+        f_peak->SetParLimits (4, 0, 10000 );//scale
+        f_peak->SetParLimits (5, 20, 50); // turn-on time
+
+        // set initial parameters
+        f_peak->SetParameters (9, 35, 50, 0, 5600, 24);
+    }
+    else
+    {
+        f_peak = new TF1 ("fit_peak", fpulsedeconv, 5, 195, 7);
+
+        f_peak->SetParNames ("PA RC time constant x      ", "shaper RC time constant y  ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               ", "sample scale         " );
+
+        // set parameter limits
+        f_peak->SetParLimits (0, 1, 50); //x
+        f_peak->SetParLimits (1, 1, 50); //y
+        f_peak->SetParLimits (2, 40, 60);
+        f_peak->FixParameter (2, 50);//tau
+        f_peak->SetParLimits (3, -400, 400);//baseline
+        //f_peak->FixParameter (3, 0);//baseline
+        f_peak->SetParLimits (4, 0, 10000 );//scale
+        f_peak->SetParLimits (5, 20, 50); // turn-on time
+        f_peak->SetParLimits (6, 0, 3); // scale
+
+        // set initial parameters
+        f_peak->SetParameters (9, 35, 50, 0, 5600, 40, 0.8);
+    }
+
+
+    TVirtualFitter::SetDefaultFitter ("Minuit2");
+    TVirtualFitter::SetErrorDef (3);
+    TVirtualFitter::SetPrecision (1);
+    //TVirtualFitter::SetDefaultFitter ("Migrad");
+    TFitResultPtr r = pHist->Fit (f_peak, gFitString.c_str() );
+    int cFitStatus = r;
+    std::cout << "Fit STATUS: " << cFitStatus << std::endl;
+
+    // return the point where the turn-on fit = 3% signal.
+    float cMaxAmplitude = pHist->GetMaximum();
+    float time = 5.;
+    float base = f_peak->GetMinimum (0, 50);
+
+    for (; time < 50 && (f_peak->Eval (time) - base) < 0.03 * (cMaxAmplitude - base); time += 0.1) {}
+
+    // extract the parameters from the turn on
+    cPulse.turn_on_time = time - 0.05;
+    //cPulse.baseline = f_peak->GetParameter (3);
+    cPulse.baseline = f_peak->Eval (time - 5);
+
+    // extract the pulse parameters from the peak fit
+    cPulse.peak_time = f_peak->GetMaximumX();
+    cPulse.max_pulseheight = f_peak->GetMaximum();
+
+    cPulse.time_constant = f_peak->GetParameter (2) ;
+
+    if (cPulse.peak_time + 125 < 195)
+        cPulse.tail_amplitude = f_peak->Eval (cPulse.peak_time + 125);
+    else
+        cPulse.tail_amplitude = f_peak->Eval (195);
+
+    cPulse.chi2_peak = f_peak->GetChisquare() / f_peak->GetNDF();
+    cPulse.fit_status = cFitStatus;
+
+    if (!cPeakMode)
+    {
+        cPulse.undershoot = f_peak->GetMinimum();
+        cPulse.undershoot_time = f_peak->GetMinimumX();
+        cPulse.return_to_baseline = f_peak->GetX (cPulse.baseline, cPulse.undershoot_time, 195);
+    }
+
+    delete f_peak;
+    cPulse.compute();
+    return cPulse;
+}
+#endif

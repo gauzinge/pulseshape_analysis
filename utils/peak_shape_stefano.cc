@@ -6,6 +6,8 @@
 #include <TFitResultPtr.h>
 
 TGraph* myPulse = NULL;
+#define npoints 1000000
+#define maxtime 200.
 
 /*
    antani.SetPoint(0,0,0);
@@ -156,7 +158,7 @@ double adjust_maximum (double tau, double x)
         last_max = find_maximum (tau, x, y);
         move = last_max - tau;
         y -= move;
-        //printf("y=%.6f\n",y);
+        printf ("y=%.6f\n", y);
     }
 
     return y;

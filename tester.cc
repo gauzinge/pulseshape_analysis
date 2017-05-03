@@ -124,9 +124,11 @@ void loop_histograms (std::string pFilename)
             TH1F* cHist;
             cCurrentDir->GetObject (cKey->GetName(), cHist);
             std::cout << cKey->GetName() << " " << cHist << std::endl;
-            //pulse_parameters cPulse = analyze_fileStructure...
+            pulse_parameters cPulse = analyze_hist_analytical (cHist);
             // Fill the histograms
             // save the histogram in case it exceeds the Chi2
+            // if(cPulse.fit_status ==4)
+            // do something with me!
             // cHist->SetDirectory()
         }
     }
@@ -134,11 +136,12 @@ void loop_histograms (std::string pFilename)
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    //TH1F* cPeakBefore = getHist ("Deco_after", 1);
+    //loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
+    TH1F* cPeakBefore = getHist ("Peak_after", 7);
     //histogram and boolean to determine if gaus or crrc in deco mode
     //analyze_hist (cPeakBefore, false);
-    //TCanvas* testcanvas = new TCanvas ("test", "test");
-    //testcanvas->cd();
-    //cPeakBefore->Draw ("PE X0");
+    analyze_hist_analytical (cPeakBefore);
+    TCanvas* testcanvas = new TCanvas ("test", "test");
+    testcanvas->cd();
+    cPeakBefore->Draw ("PE X0");
 }
