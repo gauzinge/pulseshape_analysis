@@ -88,6 +88,7 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
 
 void loop_histograms (std::string pFilename)
 {
+    // open the file an perform a sanity check!
     std::string cPath = pFilename;
     TFile* cFile = TFile::Open (pFilename.c_str() );
 
@@ -109,26 +110,30 @@ void loop_histograms (std::string pFilename)
     cFile->cd (cPath.c_str() );
     // get the TDirectory object
     TDirectory* cDir = gDirectory;
-    // recurse through the directory tree and treat the histograms
+    // recurse through the directory tree and get a std::set of lowest level Dirs
     std::set<std::string> cDirTree;
     analyze_fileStructure (cDir, cDirTree);
 
+    // iterate the set and extract all histos in each subdir
     for (auto cPath : cDirTree)
     {
         std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
+        // set the current directory to the path & get a handle
         TDirectory* cCurrentDir = gDirectory;
 
+        // get the list of keys in that directory and iterate them
         for (auto cKey : *cCurrentDir->GetListOfKeys() )
         {
             TH1F* cHist;
             cCurrentDir->GetObject (cKey->GetName(), cHist);
-            std::cout << cKey->GetName() << " " << cHist << std::endl;
+            //std::cout << cKey->GetName() << " " << cHist << std::endl;
+
+            // do what we came for!
             pulse_parameters cPulse = analyze_hist_analytical (cHist);
             // Fill the histograms
             // save the histogram in case it exceeds the Chi2
             // if(cPulse.fit_status ==4)
-            // do something with me!
             // cHist->SetDirectory()
         }
     }

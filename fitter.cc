@@ -359,7 +359,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
     }
     else
     {
-        f_peak = new TF1 ("fit_peak", fpulsedeconv, 5, 195, 7);
+        f_peak = new TF1 ("fit_deco", fpulsedeconv, 5, 195, 7);
 
         f_peak->SetParNames ("PA RC time constant x      ", "shaper RC time constant y  ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               ", "sample scale         " );
 

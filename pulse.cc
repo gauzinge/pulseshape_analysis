@@ -47,11 +47,11 @@ double pulse_x0_ytau (double tau, double a_0, double s, double t_0, double t)
     return a_0 + s * (t / tau * exp (-t / tau) );
 }
 
-double pulse_xy (double tau, double x, double a_0, double s, double t_0, double t)
-{
-    t -= t_0;
-    return a_0 + s * (pow (tau, 2) * exp (-t / tau) / (pow ( (x - tau), 2) ) );
-}
+//double pulse_xy (double tau, double x, double a_0, double s, double t_0, double t)
+//{
+//t -= t_0;
+//return a_0 + s * (pow (tau, 2) * exp (-t / tau) / (pow ( (x - tau), 2) ) );
+//}
 
 double pulse (double tau,
               double x, double y, double a_0, double s, double t_0, double t)
