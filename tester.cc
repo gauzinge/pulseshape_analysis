@@ -130,7 +130,7 @@ void loop_histograms (std::string pFilename)
             //std::cout << cKey->GetName() << " " << cHist << std::endl;
 
             // do what we came for!
-            pulse_parameters cPulse = analyze_hist_analytical (cHist);
+            pulse_parameters cPulse = analyze_hist_analytical (cHist, false, false);
             // Fill the histograms
             // save the histogram in case it exceeds the Chi2
             // if(cPulse.fit_status ==4)
@@ -142,10 +142,12 @@ void loop_histograms (std::string pFilename)
 void tester()
 {
     //loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    TH1F* cPeakBefore = getHist ("Peak_after", 7);
+    TH1F* cPeakBefore = getHist ("Peak_after", 1);
     //histogram and boolean to determine if gaus or crrc in deco mode
     //analyze_hist (cPeakBefore, false);
-    analyze_hist_analytical (cPeakBefore);
+    // histogram, fix \tau, fix baseline
+    // Peak mode: leave tau floating, deco mode: fix tau
+    analyze_hist_analytical (cPeakBefore, false, false);
     TCanvas* testcanvas = new TCanvas ("test", "test");
     testcanvas->cd();
     cPeakBefore->Draw ("PE X0");

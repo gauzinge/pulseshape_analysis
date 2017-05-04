@@ -10,8 +10,8 @@
 
 #include "pulse.cc"
 
-std::string gFitString = "W LL R+";
 //std::string gFitString = "W LL R+";
+std::string gFitString = "MEIR+";
 
 // sigmoid to fit the turn-on of the pulse
 // par[0]: amplitude
@@ -301,7 +301,7 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
     return cPulse;
 }
 
-pulse_parameters analyze_hist_analytical (TH1* pHist)
+pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool pFix_a0 = false)
 {
     //boolen to tell me if peak mode
     bool cPeakMode;
@@ -348,9 +348,14 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 1, 50); //y
-        f_peak->SetParLimits (2, 40, 60);
-        //f_peak->FixParameter (2, 50);//tau
+        f_peak->SetParLimits (2, 30, 60);
+
+        if (pFix_tau) f_peak->FixParameter (2, 50); //tau
+
         f_peak->SetParLimits (3, -400, 400);//baseline
+
+        if (pFix_a0) f_peak->FixParameter (3, 0); //baseline
+
         f_peak->SetParLimits (4, 0, 10000 );//scale
         f_peak->SetParLimits (5, 20, 50); // turn-on time
 
@@ -366,10 +371,14 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 1, 50); //y
-        f_peak->SetParLimits (2, 40, 60);
-        f_peak->FixParameter (2, 50);//tau
+        f_peak->SetParLimits (2, 30, 60);
+
+        if (pFix_tau) f_peak->FixParameter (2, 50); //tau
+
         f_peak->SetParLimits (3, -400, 400);//baseline
-        //f_peak->FixParameter (3, 0);//baseline
+
+        if (pFix_a0) f_peak->FixParameter (3, 0); //baseline
+
         f_peak->SetParLimits (4, 0, 10000 );//scale
         f_peak->SetParLimits (5, 20, 50); // turn-on time
         f_peak->SetParLimits (6, 0, 3); // scale
@@ -379,7 +388,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
     }
 
 
-    TVirtualFitter::SetDefaultFitter ("Minuit2");
+    //TVirtualFitter::SetDefaultFitter ("Minuit2");
     TVirtualFitter::SetErrorDef (3);
     TVirtualFitter::SetPrecision (1);
     //TVirtualFitter::SetDefaultFitter ("Migrad");

@@ -4,10 +4,9 @@
 #include "TF1.h"
 
 double pulse_raw (double tau,
-                  double x, double y, double a_0, double s, double t_0, double t)
+                  double x, double y, double t)
 {
     double result1, result2, result3;
-    t -= t_0;
 
     // term 2
     result1 = tau * y * exp (-t / y);
@@ -20,31 +19,28 @@ double pulse_raw (double tau,
     //term 1
     result3 = pow (tau, 2) * exp (-t / tau);
     result3 /= pow (tau, 2) + (x - tau) * y - tau * x;
-    return a_0 + s * (result1 + result2 + result3);
+    return result1 + result2 + result3;
 }
 
 double pulse_x0 (double tau,
-                 double y, double a_0, double s, double t_0, double t)
+                 double y, double t)
 {
-    t -= t_0;
-    return a_0 + s * (tau / (y - tau) * (exp (-t / y) - exp (-t / tau) ) );
+    return  tau / (y - tau) * (exp (-t / y) - exp (-t / tau) );
 }
 
 double pulse_ytau (double tau,
-                   double x, double a_0, double s, double t_0, double t)
+                   double x, double t)
 {
-    t -= t_0;
     double result1, result2;
     result1 = exp (-t / x) - exp (-t / tau);
     result1 *= tau * x / (tau - x);
     result2 = t * exp (-t / tau);
-    return a_0 + s * ( (result1 + result2) / (tau - x) );
+    return (result1 + result2) / (tau - x);
 }
 
-double pulse_x0_ytau (double tau, double a_0, double s, double t_0, double t)
+double pulse_x0_ytau (double tau, double t)
 {
-    t -= t_0;
-    return a_0 + s * (t / tau * exp (-t / tau) );
+    return t / tau * exp (-t / tau);
 }
 
 //double pulse_xy (double tau, double x, double a_0, double s, double t_0, double t)
@@ -54,7 +50,7 @@ double pulse_x0_ytau (double tau, double a_0, double s, double t_0, double t)
 //}
 
 double pulse (double tau,
-              double x, double y, double a_0, double s, double t_0, double t)
+              double x, double y, double t)
 {
     if (x > y)
     {
@@ -63,12 +59,12 @@ double pulse (double tau,
         y = pivot;
     }
 
-    if ( (x == 0) && (y == tau) ) return pulse_x0_ytau (tau, a_0, s, t_0, t);
+    if ( (x == 0) && (y == tau) ) return pulse_x0_ytau (tau, t);
     //added by Georg
     //else if (x == y) return pulse_xy (tau, x, a_0, s, t_0, t );
-    else if (x == 0) return pulse_x0 (tau, y, a_0, s, t_0, t);
-    else if (y == tau) return pulse_ytau (tau, x, a_0, s, t_0, t);
-    else return pulse_raw (tau, x, y, a_0, s, t_0, t);
+    else if (x == 0) return pulse_x0 (tau, y, t);
+    else if (y == tau) return pulse_ytau (tau, x, t);
+    else return pulse_raw (tau, x, y, t);
 }
 
 double fpulse (double* x, double* par)
@@ -79,10 +75,11 @@ double fpulse (double* x, double* par)
     double a_0 = par[3];
     double s = par[4];
     double t_0 = par[5];
+    double t = x[0] - t_0;
 
     if (x[0] < t_0) return a_0;
 
-    return pulse (tau, xx, y, a_0, s, t_0, x[0]);
+    return a_0 + s * (pulse (tau, xx, y, t) );
 }
 
 double fpulsedeconv (double* x, double* par)
