@@ -11,7 +11,7 @@
 #include "pulse.cc"
 
 //std::string gFitString = "W LL R+";
-std::string gFitString = "MEIR+";
+std::string gFitString = "MR+";
 
 // sigmoid to fit the turn-on of the pulse
 // par[0]: amplitude
@@ -388,9 +388,10 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
 
 
     //TVirtualFitter::SetDefaultFitter ("Minuit2");
+    //TVirtualFitter::SetDefaultFitter ("Migrad");
     //TVirtualFitter::SetErrorDef (3);
     //TVirtualFitter::SetPrecision (1);
-    //TVirtualFitter::SetDefaultFitter ("Migrad");
+
     TFitResultPtr r = pHist->Fit (f_peak, gFitString.c_str() );
     int cFitStatus = r;
     std::cout << "Fit STATUS: " << cFitStatus << std::endl;
@@ -404,7 +405,6 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
 
     // extract the parameters from the turn on
     //cPulse.baseline = f_peak->GetParameter (3);
-    cPulse.baseline = f_peak->Eval (time - 5);
 
     // extract the pulse parameters from the peak fit
     cPulse.peak_time = f_peak->GetMaximumX();
@@ -412,10 +412,10 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
 
     cPulse.time_constant = f_peak->GetParameter (1) ;
 
-    if (cPulse.peak_time + 125 < 195)
+    if (cPulse.peak_time + 125 < 200)
         cPulse.tail_amplitude = f_peak->Eval (cPulse.peak_time + 125);
     else
-        cPulse.tail_amplitude = f_peak->Eval (195);
+        cPulse.tail_amplitude = f_peak->Eval (200);
 
     cPulse.chi2_peak = f_peak->GetChisquare() / f_peak->GetNDF();
     cPulse.fit_status = cFitStatus;
@@ -427,8 +427,10 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
         cPulse.turn_on_time = time - 0.05;
         cPulse.undershoot = f_peak->GetMinimum();
         cPulse.undershoot_time = f_peak->GetMinimumX();
-        cPulse.return_to_baseline = f_peak->GetX (cPulse.baseline, cPulse.undershoot_time, 195);
+        cPulse.return_to_baseline = f_peak->GetX (cPulse.baseline, cPulse.undershoot_time, 200);
     }
+
+    cPulse.baseline = f_peak->Eval (10);
 
     delete f_peak;
     cPulse.compute();
