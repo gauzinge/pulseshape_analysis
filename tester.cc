@@ -185,16 +185,16 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         cUndershootAmplitude->SetDirectory (cResultDir);
 
         // chi2 and status
-        cChi2 = new TH1F ("h_chi2", "h_chi2", 1000, 0, 100);
+        cChi2 = new TH1F ("h_chi2", "h_chi2", 200, 0, 20);
         cChi2->SetDirectory (cResultDir);
-        cStatus = new TH1F ("h_status", "h_status", 4020, -10, 4010);
+        cStatus = new TH1F ("h_status", "h_status", 4, 0, 4);
         cStatus->SetDirectory (cResultDir);
     }
 
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        if (cDirCounter == 5) break;
+        //if (cDirCounter == 5) break;
 
         std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
@@ -235,7 +235,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             cStatus->Fill (cPulse.fit_status);
 
             //save the histogram in case it exceeds the Chi2
-            if (cPulse.fit_status == 4000 ||  cPulse.chi2_peak > 6)
+            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 6)
                 cHist->SetDirectory (cNotFittedDir);
         }
 
@@ -284,11 +284,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
 void tester()
 {
     loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    //TH1F* cPeakBefore = getHist ("Peak_after", 7);
-    //analyze_hist (cPeakBefore, false);
-    // histogram, fix \tau, fix baseline
-    // Peak mode: leave tau floating, deco mode: fix tau
-    //analyze_hist_analytical (cPeakBefore);
+    //TH1F* cPeakBefore = getHist ("Peak_after", 9);
+    //analyze_hist_analytical (cPeakBefore, true);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
     //testcanvas->cd();
     //cPeakBefore->Draw ("PE X0");

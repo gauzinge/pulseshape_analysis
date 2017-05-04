@@ -391,7 +391,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
 
 
     //TVirtualFitter::SetDefaultFitter ("Minuit2");
-    //TVirtualFitter::SetDefaultFitter ("Migrad");
+    TVirtualFitter::SetDefaultFitter ("Migrad");
     //TVirtualFitter::SetErrorDef (3);
     //TVirtualFitter::SetPrecision (1);
 
@@ -421,7 +421,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
         cPulse.tail_amplitude = f_peak->Eval (200);
 
     cPulse.chi2_peak = f_peak->GetChisquare() / f_peak->GetNDF();
-    cPulse.fit_status = cFitStatus;
+    cPulse.fit_status = (cFitStatus == 4000) ? 0 : cFitStatus;
 
     if (cPeakMode) cPulse.turn_on_time = f_peak->GetParameter (4);
 
