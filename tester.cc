@@ -111,8 +111,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
 
     // here crate a new root file with the results and the non fitted histos
     TFile* cResultFile = new TFile ("Data/Results.root", "UPDATE");
-    //TDirectory* cNotFittedDir = cResultFile->mkdir("NotFitted");
-    // cResultFile->cd();
+    TDirectory* cNotFittedDir = cResultFile->mkdir ("NotFitted");
+    cResultFile->cd();
     TDirectory* cResultDir;
     TObject* cTmp = gROOT->FindObject ("Results");
 
@@ -209,33 +209,33 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             //std::cout << cKey->GetName() << " " << cHist << std::endl;
 
             //do what we came for !
-            //pulse_parameters cPulse;
+            pulse_parameters cPulse;
 
-            //if (pAnalytical)
-            //cPulse = analyze_hist_analytical (cHist);
-            //else
-            //cPulse = analyze_hist (cHist);
+            if (pAnalytical)
+                cPulse = analyze_hist_analytical (cHist, true);
+            else
+                cPulse = analyze_hist (cHist);
 
-            //// fill the histograms
-            //cTurnOnTime->Fill (cPulse.turn_on_time);
-            //cPeakTime->Fill (cPulse.peak_time);
-            //cRiseTime->Fill (cPulse.rise_time);
-            //cTimeConstant->Fill (cPulse.time_constant);
-            //cUndershootTime->Fill (cPulse.undershoot_time);
-            //cReturnTime->Fill (cPulse.return_to_baseline);
+            // fill the histograms
+            cTurnOnTime->Fill (cPulse.turn_on_time);
+            cPeakTime->Fill (cPulse.peak_time);
+            cRiseTime->Fill (cPulse.rise_time);
+            cTimeConstant->Fill (cPulse.time_constant);
+            cUndershootTime->Fill (cPulse.undershoot_time);
+            cReturnTime->Fill (cPulse.return_to_baseline);
 
-            //cBaseline->Fill (cPulse.baseline);
-            //cMaximumAmp->Fill (cPulse.max_pulseheight);
-            //cAmplitude->Fill (cPulse.amplitude);
-            //cTailAmplitude->Fill (cPulse.tail_amplitude);
-            //cUndershootAmplitude->Fill (cPulse.undershoot);
+            cBaseline->Fill (cPulse.baseline);
+            cMaximumAmp->Fill (cPulse.max_pulseheight);
+            cAmplitude->Fill (cPulse.amplitude);
+            cTailAmplitude->Fill (cPulse.tail_amplitude);
+            cUndershootAmplitude->Fill (cPulse.undershoot);
 
-            //cChi2->Fill (cPulse.chi2_peak);
-            //cStatus->Fill (cPulse.fit_status);
+            cChi2->Fill (cPulse.chi2_peak);
+            cStatus->Fill (cPulse.fit_status);
 
-            // save the histogram in case it exceeds the Chi2
-            // if(cPulse.fit_status ==4)
-            // cHist->SetDirectory()
+            //save the histogram in case it exceeds the Chi2
+            if (cPulse.fit_status == 4 || fabs (cPulse.baseline) == 400 || cPulse.chi2_peak > 10)
+                cHist->SetDirectory (cNotFittedDir);
         }
 
         cDirCounter++;

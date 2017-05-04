@@ -11,7 +11,7 @@
 #include "pulse.cc"
 
 //std::string gFitString = "W LL R+";
-std::string gFitString = "MR+";
+std::string gFitString = "MRQ+";
 
 // sigmoid to fit the turn-on of the pulse
 // par[0]: amplitude
@@ -304,7 +304,7 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
     return cPulse;
 }
 
-pulse_parameters analyze_hist_analytical (TH1* pHist)
+pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
 {
     //boolen to tell me if peak mode
     bool cPeakMode;
@@ -351,9 +351,9 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
 
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
-        f_peak->SetParLimits (1, 20, 60); //tau
+        f_peak->SetParLimits (1, 20, 70); //tau
 
-        //f_peak->FixParameter (1, 50); //tau
+        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
         f_peak->SetParLimits (2, -400, 400);//baseline
 
@@ -375,7 +375,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist)
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 20, 60); //tau
 
-        //f_peak->FixParameter (1, 50); //tau
+        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
         f_peak->SetParLimits (2, -400, 400);//baseline
 
