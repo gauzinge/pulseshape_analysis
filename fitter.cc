@@ -348,6 +348,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 1, 50); //y
+        //f_peak->FixParameter (1, 1);
         f_peak->SetParLimits (2, 30, 60);
 
         if (pFix_tau) f_peak->FixParameter (2, 50); //tau

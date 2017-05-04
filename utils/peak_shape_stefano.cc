@@ -177,7 +177,7 @@ void make_maxima (double tau)
     for (double x = 1.01; x < 50; x += 0.1)
     {
         y = adjust_maximum (tau, x) ;
-        myPulse->SetPoint (i++, x, y);
+        //myPulse->SetPoint (i++, x, y);
     }
 }
 
@@ -240,6 +240,15 @@ void peak()
     double y = 50;
     //make_pulse (tau, x, y);
     printValues (tau, x, y);
+    //myPulse->Draw ("alp");
+}
+
+void test()
+{
+    TF1* a = new TF1 ("a", "49.9581-1.7941*x-0.110089*pow(x,2)+0.0113809*pow(x,3)-0.000388111*pow(x,4)+5.9761e-06*pow(x,5)-3.51805e-08*pow(x,6)", 0, 50);
+    //a->Draw();
+    double tau = 50;
+    make_maxima (tau);
     //myPulse->Draw ("alp");
 }
 

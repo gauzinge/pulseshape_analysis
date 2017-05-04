@@ -3,6 +3,9 @@
 
 #include "TF1.h"
 
+#define npoints 1000
+#define maxtime 195.
+
 double pulse_raw (double tau,
                   double x, double y, double t)
 {
@@ -67,15 +70,88 @@ double pulse (double tau,
     else return pulse_raw (tau, x, y, t);
 }
 
+double find_maximum (double tau, double x, double y)
+{
+    double current_t = tau;
+    double current_y = pulse (tau, x, y, current_t);
+    double max_t = current_t;
+    double max_y = current_y;
+    double last_y = 0;
+
+    while (current_y > last_y)
+    {
+        current_t += maxtime / npoints;
+        last_y = current_y;
+        current_y = pulse (tau, x, y, current_t);
+
+        if (current_y > max_y)
+        {
+            max_y = current_y;
+            max_t = current_t;
+        }
+
+        //printf ("current_t=%f, current_y=%f, last_y=%f\n", current_t, current_y, last_y);
+    }
+
+    last_y = current_y - 1e-6;
+
+    while (current_y > last_y)
+    {
+        current_t -= maxtime / npoints;
+        last_y = current_y;
+        current_y = pulse (tau, x, y, current_t);
+
+        if (current_y > max_y)
+        {
+            max_y = current_y;
+            max_t = current_t;
+        }
+
+        //printf ("current_t=%f, current_y=%f, last_y=%f\n", current_t, current_y, last_y);
+    }
+
+    return max_t;
+}
+
+double adjust_maximum (double tau, double x)
+{
+    double y = tau - x;
+    double last_max, move;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        last_max = find_maximum (tau, x, y);
+        move = last_max - tau;
+        y -= move;
+        //printf ("y=%.6f\n", y);
+    }
+
+    return y;
+}
+
+double get_compensation (double x)
+{
+    return 49.9581
+           - 1.7941 * x
+           - 0.110089 * pow (x, 2)
+           + 0.0113809 * pow (x, 3)
+           - 0.000388111 * pow (x, 4)
+           + 5.9761e-06 * pow (x, 5)
+           - 3.51805e-08 * pow (x, 6);
+}
+
 double fpulse (double* x, double* par)
 {
     double xx = par[0];
-    double y = par[1];
     double tau = par[2];
     double a_0 = par[3];
     double s = par[4];
     double t_0 = par[5];
     double t = x[0] - t_0;
+
+    //double y = adjust_maximum (tau, xx);
+    //double y = get_compensation (xx);
+    double y = par[1];
 
     if (x[0] < t_0) return a_0;
 
