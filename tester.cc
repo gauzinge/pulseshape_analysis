@@ -135,6 +135,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     if (cTmp)
     {
         cResultDir = (TDirectory*) cTmp;
+        cResultDir->cd();
 
         cTurnOnTime = (TH1F*) gROOT->FindObject ("h_turn_on_time");
         cPeakTime = (TH1F*) gROOT->FindObject ("h_peak_time");
@@ -234,7 +235,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             cStatus->Fill (cPulse.fit_status);
 
             //save the histogram in case it exceeds the Chi2
-            if (cPulse.fit_status == 4 || fabs (cPulse.baseline) == 400 || cPulse.chi2_peak > 10)
+            if (cPulse.fit_status == 4000 ||  cPulse.chi2_peak > 6)
                 cHist->SetDirectory (cNotFittedDir);
         }
 
