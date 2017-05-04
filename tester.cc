@@ -142,7 +142,7 @@ void loop_histograms (std::string pFilename)
 void tester()
 {
     //loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    TH1F* cPeakBefore = getHist ("Deco_after", 7);
+    TH1F* cPeakBefore = getHist ("Deco_after", 1);
     //histogram and boolean to determine if gaus or crrc in deco mode
     //analyze_hist (cPeakBefore, false);
     // histogram, fix \tau, fix baseline

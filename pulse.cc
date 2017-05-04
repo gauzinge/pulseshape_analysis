@@ -143,15 +143,15 @@ double get_compensation (double x)
 double fpulse (double* x, double* par)
 {
     double xx = par[0];
-    double tau = par[2];
-    double a_0 = par[3];
-    double s = par[4];
-    double t_0 = par[5];
+    double tau = par[1];
+    double a_0 = par[2];
+    double s = par[3];
+    double t_0 = par[4];
     double t = x[0] - t_0;
 
     //double y = adjust_maximum (tau, xx);
-    //double y = get_compensation (xx);
-    double y = par[1];
+    double y = get_compensation (xx);
+    //double y = par[1];
 
     if (x[0] < t_0) return a_0;
 
@@ -160,9 +160,9 @@ double fpulse (double* x, double* par)
 
 double fpulsedeconv (double* x, double* par)
 {
-    double xm = par[6] * (x[0] - 25);
-    double xp = par[6] * (x[0] + 25);
-    double xz = par[6] * x[0];
+    double xm = par[5] * (x[0] - 25);
+    double xp = par[5] * (x[0] + 25);
+    double xz = par[5] * x[0];
     return 1.2131 * fpulse (&xp, par) - 1.4715 * fpulse (&xz, par) + 0.4463 * fpulse (&xm, par);
 }
 

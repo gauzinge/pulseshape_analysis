@@ -308,6 +308,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
     pHist->Sumw2();
     //first, format the histogram and set the scale correctly
     pHist->Scale (-1.);
+    pHist->SetMarkerStyle (2);
 
     // to fit the whole pulse, also if it undershoots
     //or has negative baseline
@@ -341,57 +342,54 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
 
     if (cPeakMode)
     {
-        f_peak = new TF1 ("fit_peak", fpulse, 5, 195, 6);
+        f_peak = new TF1 ("fit_peak", fpulse, 1, 200, 5);
 
-        f_peak->SetParNames ("PA RC time constant x      ", "shaper RC time constant y  ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               " );
+        f_peak->SetParNames ("PA RC time constant x      ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               " );
 
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
-        f_peak->SetParLimits (1, 1, 50); //y
-        //f_peak->FixParameter (1, 1);
-        f_peak->SetParLimits (2, 30, 60);
+        f_peak->SetParLimits (1, 20, 60); //tau
 
-        if (pFix_tau) f_peak->FixParameter (2, 50); //tau
+        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
-        f_peak->SetParLimits (3, -400, 400);//baseline
+        f_peak->SetParLimits (2, -400, 400);//baseline
 
-        if (pFix_a0) f_peak->FixParameter (3, 0); //baseline
+        if (pFix_a0) f_peak->FixParameter (2, 0); //baseline
 
-        f_peak->SetParLimits (4, 0, 10000 );//scale
-        f_peak->SetParLimits (5, 20, 50); // turn-on time
+        f_peak->SetParLimits (3, 0, 10000 );//scale
+        f_peak->SetParLimits (4, 20, 50); // turn-on time
 
         // set initial parameters
-        f_peak->SetParameters (9, 35, 50, 0, 5600, 24);
+        f_peak->SetParameters (17, 50, 0, 5600, 24);
     }
     else
     {
-        f_peak = new TF1 ("fit_deco", fpulsedeconv, 5, 195, 7);
+        f_peak = new TF1 ("fit_deco", fpulsedeconv, 1, 200, 6);
 
-        f_peak->SetParNames ("PA RC time constant x      ", "shaper RC time constant y  ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               ", "sample scale         " );
+        f_peak->SetParNames ("PA RC time constant x      ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               ", "sample scale         " );
 
         // set parameter limits
         f_peak->SetParLimits (0, 1, 50); //x
-        f_peak->SetParLimits (1, 1, 50); //y
-        f_peak->SetParLimits (2, 30, 60);
+        f_peak->SetParLimits (1, 20, 60); //tau
 
-        if (pFix_tau) f_peak->FixParameter (2, 50); //tau
+        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
-        f_peak->SetParLimits (3, -400, 400);//baseline
+        f_peak->SetParLimits (2, -400, 400);//baseline
 
-        if (pFix_a0) f_peak->FixParameter (3, 0); //baseline
+        if (pFix_a0) f_peak->FixParameter (2, 0); //baseline
 
-        f_peak->SetParLimits (4, 0, 10000 );//scale
-        f_peak->SetParLimits (5, 20, 50); // turn-on time
-        f_peak->SetParLimits (6, 0, 3); // scale
+        f_peak->SetParLimits (3, 0, 10000 );//scale
+        f_peak->SetParLimits (4, 20, 50); // turn-on time
+        f_peak->SetParLimits (5, 0, 3); // scale
 
         // set initial parameters
-        f_peak->SetParameters (9, 35, 50, 0, 5600, 40, 0.8);
+        f_peak->SetParameters (1, 50, 0, 5600, 40, 0.8);
     }
 
 
     //TVirtualFitter::SetDefaultFitter ("Minuit2");
-    TVirtualFitter::SetErrorDef (3);
-    TVirtualFitter::SetPrecision (1);
+    //TVirtualFitter::SetErrorDef (3);
+    //TVirtualFitter::SetPrecision (1);
     //TVirtualFitter::SetDefaultFitter ("Migrad");
     TFitResultPtr r = pHist->Fit (f_peak, gFitString.c_str() );
     int cFitStatus = r;
@@ -402,10 +400,9 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
     float time = 5.;
     float base = f_peak->GetMinimum (0, 50);
 
-    for (; time < 50 && (f_peak->Eval (time) - base) < 0.03 * (cMaxAmplitude - base); time += 0.1) {}
+    for (; time < 50 && (f_peak->Eval (time) - base) < 0.01 * (cMaxAmplitude - base); time += 0.1) {}
 
     // extract the parameters from the turn on
-    cPulse.turn_on_time = time - 0.05;
     //cPulse.baseline = f_peak->GetParameter (3);
     cPulse.baseline = f_peak->Eval (time - 5);
 
@@ -413,7 +410,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
     cPulse.peak_time = f_peak->GetMaximumX();
     cPulse.max_pulseheight = f_peak->GetMaximum();
 
-    cPulse.time_constant = f_peak->GetParameter (2) ;
+    cPulse.time_constant = f_peak->GetParameter (1) ;
 
     if (cPulse.peak_time + 125 < 195)
         cPulse.tail_amplitude = f_peak->Eval (cPulse.peak_time + 125);
@@ -423,8 +420,11 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
     cPulse.chi2_peak = f_peak->GetChisquare() / f_peak->GetNDF();
     cPulse.fit_status = cFitStatus;
 
+    if (cPeakMode) cPulse.turn_on_time = f_peak->GetParameter (4);
+
     if (!cPeakMode)
     {
+        cPulse.turn_on_time = time - 0.05;
         cPulse.undershoot = f_peak->GetMinimum();
         cPulse.undershoot_time = f_peak->GetMinimumX();
         cPulse.return_to_baseline = f_peak->GetX (cPulse.baseline, cPulse.undershoot_time, 195);
