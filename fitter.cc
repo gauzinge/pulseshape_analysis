@@ -76,6 +76,9 @@ struct pulse_parameters
         fitMode ("")
     {
     }
+    pulse_parameters()
+    {
+    }
 
     bool  peak_mode;
     float turn_on_time;
@@ -137,9 +140,9 @@ struct pulse_parameters
         }
         else
         {
-            std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
+            //std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
             std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
-            std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
+            //std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
         }
 
         std::cout << "***************************************" << std::endl;

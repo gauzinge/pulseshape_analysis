@@ -86,7 +86,7 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
     }
 }
 
-void loop_histograms (std::string pFilename)
+void loop_histograms (std::string pFilename, bool pAnalytical = true)
 {
     // open the file an perform a sanity check!
     std::string cPath = pFilename;
@@ -98,25 +98,103 @@ void loop_histograms (std::string pFilename)
         exit (1);
     }
 
-    // here crate a new root file with the results and the non fitted histos
-    // TFile* cResultFile = new TFile("Data/Results.root", "UPDATE");
-    // cResultFile->mkdir("NotFitted");
-    // cResultFile->cd();
-    // cResultFile->mkdir("Results");
-    // then create the histograms for the parameters and call pHist->SetDirectory() so it's associated to the result file
-
     // go in the highest level that is always the same
     cPath += ":/DQMData/SiStrip/ControlView";
     cFile->cd (cPath.c_str() );
     // get the TDirectory object
     TDirectory* cDir = gDirectory;
+    int cCounter = 0;
+    int cDirCounter = 0;
     // recurse through the directory tree and get a std::set of lowest level Dirs
     std::set<std::string> cDirTree;
     analyze_fileStructure (cDir, cDirTree);
 
-    // iterate the set and extract all histos in each subdir
+    // here crate a new root file with the results and the non fitted histos
+    TFile* cResultFile = new TFile ("Data/Results.root", "UPDATE");
+    //TDirectory* cNotFittedDir = cResultFile->mkdir("NotFitted");
+    // cResultFile->cd();
+    TDirectory* cResultDir;
+    TObject* cTmp = gROOT->FindObject ("Results");
+
+    // 1 histogram for each parameter
+    TH1F* cTurnOnTime;
+    TH1F* cPeakTime;
+    TH1F* cRiseTime;
+    TH1F* cTimeConstant;
+    TH1F* cUndershootTime;
+    TH1F* cReturnTime;
+    TH1F* cBaseline;
+    TH1F* cMaximumAmp;
+    TH1F* cAmplitude;
+    TH1F* cTailAmplitude;
+    TH1F* cUndershootAmplitude;
+    TH1F* cChi2;
+    TH1F* cStatus;
+
+    // if the Results directory exists in the Results file
+    if (cTmp)
+    {
+        cResultDir = (TDirectory*) cTmp;
+
+        cTurnOnTime = (TH1F*) gROOT->FindObject ("h_turn_on_time");
+        cPeakTime = (TH1F*) gROOT->FindObject ("h_peak_time");
+        cRiseTime = (TH1F*) gROOT->FindObject ("h_rise_time");
+        cTimeConstant = (TH1F*) gROOT->FindObject ("h_time_constant");
+        cUndershootTime = (TH1F*) gROOT->FindObject ("h_undershoot_time");
+        cReturnTime = (TH1F*) gROOT->FindObject ("h_return_time");
+
+        cBaseline = (TH1F*) gROOT->FindObject ("h_baseline");
+        cMaximumAmp = (TH1F*) gROOT->FindObject ("h_maximum_amplitude");
+        cAmplitude = (TH1F*) gROOT->FindObject ("h_amplitude");
+        cTailAmplitude = (TH1F*) gROOT->FindObject ("h_tail_amplitude");
+        cUndershootAmplitude = (TH1F*) gROOT->FindObject ("h_undershoot_amplitude");
+
+        cChi2 = (TH1F*) gROOT->FindObject ("h_chi2");
+        cStatus = (TH1F*) gROOT->FindObject ("h_status");
+    }
+    // or create them
+    else
+    {
+        // in this case I have to result the histograms
+        cResultDir = cResultFile->mkdir ("Results");
+
+        cTurnOnTime = new TH1F ("h_turn_on_time", "h_turn_on_time", 300, 20, 50);
+        cTurnOnTime->SetDirectory (cResultDir);
+        cPeakTime = new TH1F ("h_peak_time", "h_peak_time", 400, 50, 90);
+        cPeakTime->SetDirectory (cResultDir);
+        cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 450, 15, 60);
+        cRiseTime->SetDirectory (cResultDir);
+        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 20, 90);
+        cTimeConstant->SetDirectory (cResultDir);
+        cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 80, 140);
+        cUndershootTime->SetDirectory (cResultDir);
+        cReturnTime = new TH1F ("h_return_time", "h_return_time", 1000, 100, 200);
+        cReturnTime->SetDirectory (cResultDir);
+
+        // histograms for amplitude
+        cBaseline = new TH1F ("h_baseline", "h_baseline", 1000, -500, 500);
+        cBaseline->SetDirectory (cResultDir);
+        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 2500, 2000, 4500);
+        cMaximumAmp->SetDirectory (cResultDir);
+        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 2500, 2000, 4500);
+        cAmplitude->SetDirectory (cResultDir);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 2000, 0, 2000);
+        cTailAmplitude->SetDirectory (cResultDir);
+        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 1100, -1000, 100);
+        cUndershootAmplitude->SetDirectory (cResultDir);
+
+        // chi2 and status
+        cChi2 = new TH1F ("h_chi2", "h_chi2", 1000, 0, 100);
+        cChi2->SetDirectory (cResultDir);
+        cStatus = new TH1F ("h_status", "h_status", 4020, -10, 4010);
+        cStatus->SetDirectory (cResultDir);
+    }
+
+    // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
+        if (cDirCounter == 5) break;
+
         std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
         // set the current directory to the path & get a handle
@@ -127,28 +205,90 @@ void loop_histograms (std::string pFilename)
         {
             TH1F* cHist;
             cCurrentDir->GetObject (cKey->GetName(), cHist);
+            cCounter++;
             //std::cout << cKey->GetName() << " " << cHist << std::endl;
 
-            // do what we came for!
-            pulse_parameters cPulse = analyze_hist_analytical (cHist);
-            // Fill the histograms
+            //do what we came for !
+            //pulse_parameters cPulse;
+
+            //if (pAnalytical)
+            //cPulse = analyze_hist_analytical (cHist);
+            //else
+            //cPulse = analyze_hist (cHist);
+
+            //// fill the histograms
+            //cTurnOnTime->Fill (cPulse.turn_on_time);
+            //cPeakTime->Fill (cPulse.peak_time);
+            //cRiseTime->Fill (cPulse.rise_time);
+            //cTimeConstant->Fill (cPulse.time_constant);
+            //cUndershootTime->Fill (cPulse.undershoot_time);
+            //cReturnTime->Fill (cPulse.return_to_baseline);
+
+            //cBaseline->Fill (cPulse.baseline);
+            //cMaximumAmp->Fill (cPulse.max_pulseheight);
+            //cAmplitude->Fill (cPulse.amplitude);
+            //cTailAmplitude->Fill (cPulse.tail_amplitude);
+            //cUndershootAmplitude->Fill (cPulse.undershoot);
+
+            //cChi2->Fill (cPulse.chi2_peak);
+            //cStatus->Fill (cPulse.fit_status);
+
             // save the histogram in case it exceeds the Chi2
             // if(cPulse.fit_status ==4)
             // cHist->SetDirectory()
         }
+
+        cDirCounter++;
     }
+
+    std::cout << cCounter << " Histograms in " << cDirCounter << " Directories detected!" << std::endl;
+
+    cResultFile->Write();
+
+    // create a canvas, divide it and show the histograms
+    TCanvas* cResultCanvas = new TCanvas ("Results", "Results", 1000, 1000);
+    //cResultCanvas->cd();
+    cResultCanvas->Divide (3, 5);
+    cResultCanvas->cd (1);
+    cTurnOnTime->Draw();
+    cResultCanvas->cd (2);
+    cPeakTime->Draw();
+    cResultCanvas->cd (3);
+    cRiseTime->Draw();
+    cResultCanvas->cd (4);
+    cTimeConstant->Draw();
+    cResultCanvas->cd (5);
+    cUndershootTime->Draw();
+    cResultCanvas->cd (6);
+    cReturnTime->Draw();
+    cResultCanvas->cd (7);
+    cBaseline->Draw();
+    cResultCanvas->cd (8);
+    cMaximumAmp->Draw();
+    cResultCanvas->cd (9);
+    cAmplitude->Draw();
+    cResultCanvas->cd (10);
+    cTailAmplitude->Draw();
+    cResultCanvas->cd (11);
+    cUndershootAmplitude->Draw();
+    cResultCanvas->cd (12);
+    cChi2->Draw();
+    cResultCanvas->cd (13);
+    cStatus->Draw();
+
+    cResultCanvas->SaveAs ("Results.pdf");
+
 }
 
 void tester()
 {
-    //loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    TH1F* cPeakBefore = getHist ("Deco_after", 7);
-    //histogram and boolean to determine if gaus or crrc in deco mode
+    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
+    //TH1F* cPeakBefore = getHist ("Peak_after", 7);
     //analyze_hist (cPeakBefore, false);
     // histogram, fix \tau, fix baseline
     // Peak mode: leave tau floating, deco mode: fix tau
-    analyze_hist_analytical (cPeakBefore);
-    TCanvas* testcanvas = new TCanvas ("test", "test");
-    testcanvas->cd();
-    cPeakBefore->Draw ("PE X0");
+    //analyze_hist_analytical (cPeakBefore);
+    //TCanvas* testcanvas = new TCanvas ("test", "test");
+    //testcanvas->cd();
+    //cPeakBefore->Draw ("PE X0");
 }
