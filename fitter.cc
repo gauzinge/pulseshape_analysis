@@ -301,7 +301,7 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
     return cPulse;
 }
 
-pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool pFix_a0 = false)
+pulse_parameters analyze_hist_analytical (TH1* pHist)
 {
     //boolen to tell me if peak mode
     bool cPeakMode;
@@ -350,11 +350,11 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 20, 60); //tau
 
-        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
+        //f_peak->FixParameter (1, 50); //tau
 
         f_peak->SetParLimits (2, -400, 400);//baseline
 
-        if (pFix_a0) f_peak->FixParameter (2, 0); //baseline
+        //f_peak->FixParameter (2, 0); //baseline
 
         f_peak->SetParLimits (3, 0, 10000 );//scale
         f_peak->SetParLimits (4, 20, 50); // turn-on time
@@ -372,11 +372,11 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau = true, bool
         f_peak->SetParLimits (0, 1, 50); //x
         f_peak->SetParLimits (1, 20, 60); //tau
 
-        if (pFix_tau) f_peak->FixParameter (1, 50); //tau
+        //f_peak->FixParameter (1, 50); //tau
 
         f_peak->SetParLimits (2, -400, 400);//baseline
 
-        if (pFix_a0) f_peak->FixParameter (2, 0); //baseline
+        //f_peak->FixParameter (2, 0); //baseline
 
         f_peak->SetParLimits (3, 0, 10000 );//scale
         f_peak->SetParLimits (4, 20, 50); // turn-on time

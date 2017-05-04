@@ -130,7 +130,7 @@ void loop_histograms (std::string pFilename)
             //std::cout << cKey->GetName() << " " << cHist << std::endl;
 
             // do what we came for!
-            pulse_parameters cPulse = analyze_hist_analytical (cHist, false, false);
+            pulse_parameters cPulse = analyze_hist_analytical (cHist);
             // Fill the histograms
             // save the histogram in case it exceeds the Chi2
             // if(cPulse.fit_status ==4)
@@ -147,7 +147,7 @@ void tester()
     //analyze_hist (cPeakBefore, false);
     // histogram, fix \tau, fix baseline
     // Peak mode: leave tau floating, deco mode: fix tau
-    analyze_hist_analytical (cPeakBefore, false, false);
+    analyze_hist_analytical (cPeakBefore);
     TCanvas* testcanvas = new TCanvas ("test", "test");
     testcanvas->cd();
     cPeakBefore->Draw ("PE X0");
