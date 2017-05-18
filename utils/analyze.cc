@@ -14,7 +14,7 @@ TH1F* getHist (std::string pDirectory, int pChannel)
     }
 
     //open the summary file
-    TFile* cFile = TFile::Open ("Summary.root");
+    TFile* cFile = TFile::Open ("../Summary.root");
 
     TDirectory* cDir;
     gDirectory->GetObject (pDirectory.c_str(), cDir);
@@ -225,13 +225,13 @@ void fitHist (TH1F* pHist, std::string pMode)
 
     int bin = pHist->FindFirstBinAbove (0.4 * cAmplitude);
     float cRiseBoundary = pHist->GetBinLowEdge (bin);
-    TF1* cRise = fitTurnOn (pHist, cAmplitude, cRiseBoundary, cPulseParam);
+    //TF1* cRise = fitTurnOn (pHist, cAmplitude, cRiseBoundary, cPulseParam);
 
     bin = pHist->FindFirstBinAbove (0.9 * cAmplitude);
     float cTailBoundary = pHist->GetBinLowEdge (bin);
-    TF1* cTail = fitTail (pHist, cAmplitude, cTailBoundary, pMode, cPulseParam);
+    TF1* cTail = fitTail (pHist, cAmplitude, 0, pMode, cPulseParam);
 
-    TF1* cUndershoot = fitUndershoot (pHist, cTail->GetMinimumX(), pMode, cPulseParam);
+    //TF1* cUndershoot = fitUndershoot (pHist, cTail->GetMinimumX(), pMode, cPulseParam);
 
     cPulseParam.compute();
 }
@@ -241,18 +241,18 @@ void analyze()
     // get the histograms
     TH1F* cPeakBefore = getHist ("Peak_before", 0);
     fitHist (cPeakBefore, "Peak");
-    TH1F* cPeakAfter = getHist ("Peak_after", 0);
-    fitHist (cPeakAfter, "Peak");
-    cPeakAfter->SetLineColor (2);
-    TH1F* cDecoAfter = getHist ("Deco_after", 0);
-    cDecoAfter->SetLineColor (3);
-    fitHist (cDecoAfter, "Deco");
+    //TH1F* cPeakAfter = getHist ("Peak_after", 0);
+    //fitHist (cPeakAfter, "Peak");
+    //cPeakAfter->SetLineColor (2);
+    //TH1F* cDecoAfter = getHist ("Deco_after", 0);
+    //cDecoAfter->SetLineColor (3);
+    //fitHist (cDecoAfter, "Deco");
 
     TCanvas* cCanvas = new TCanvas ("comparison", "comparison");
     cCanvas->cd();
     cPeakBefore->Draw ("PE X0");
-    cPeakAfter->Draw ("PE X0 same");
-    cDecoAfter->Draw ("PE X0 same");
+    //cPeakAfter->Draw ("PE X0 same");
+    //cDecoAfter->Draw ("PE X0 same");
 
     //check the uniformity of the 10 sample channels
     //TCanvas* bCanvas = new TCanvas ("uniformity", "uniformity");

@@ -335,6 +335,19 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     else
         exit (1);
 
+    //first evaluate the histogram
+    pHist->GetXaxis()->SetRange (0, 7);
+    double cBaseline = pHist->GetMean (2);
+    pHist->GetXaxis()->SetRange();
+
+    // turn on is bin center of 4 bins before 110% baseline
+    double cMaximum = pHist->GetMaximum();
+    double cTurnOn = pHist->GetBinCenter ( (pHist->FindFirstBinAbove (0.1 * cMaximum) - 2) );
+
+    std::cout << "DEBUG cBaseline: " << cBaseline << " Turn on : " << cTurnOn << " Maximum " << cMaximum << std::endl;
+
+
+
     // so we have survived rescaling and mode extraction, let's fit some!
     // this is a struct for holding the pulse parameters
     pulse_parameters cPulse (cPeakMode);
@@ -350,20 +363,21 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
         f_peak->SetParNames ("PA RC time constant x      ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               " );
 
         // set parameter limits
-        f_peak->SetParLimits (0, 1, 50); //x
+        f_peak->SetParLimits (0, 1, 70); //x
         f_peak->SetParLimits (1, 20, 70); //tau
 
         if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
-        f_peak->SetParLimits (2, -600, 600);//baseline
+        f_peak->SetParLimits (2, -900, 900);//baseline
 
         //f_peak->FixParameter (2, 0); //baseline
 
-        f_peak->SetParLimits (3, 0, 10000 );//scale
-        f_peak->SetParLimits (4, 20, 50); // turn-on time
+        f_peak->SetParLimits (3, 0, 12000 );//scale
+        f_peak->SetParLimits (4, 20, 35); // turn-on time
 
         // set initial parameters
-        f_peak->SetParameters (17, 50, 0, 5600, 24);
+        // first, get reasonable estimates
+        f_peak->SetParameters (17, 50, cBaseline, 5000, cTurnOn);
     }
     else
     {
@@ -372,21 +386,21 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
         f_peak->SetParNames ("PA RC time constant x      ", "shaper CR time constant tau", "baseline                   ", "scale                      ", "turn on time               ", "sample scale         " );
 
         // set parameter limits
-        f_peak->SetParLimits (0, 1, 50); //x
-        f_peak->SetParLimits (1, 20, 60); //tau
+        f_peak->SetParLimits (0, 1, 70); //x
+        f_peak->SetParLimits (1, 20, 70); //tau
 
         if (pFix_tau) f_peak->FixParameter (1, 50); //tau
 
-        f_peak->SetParLimits (2, -400, 400);//baseline
+        f_peak->SetParLimits (2, -900, 900);//baseline
 
         //f_peak->FixParameter (2, 0); //baseline
 
-        f_peak->SetParLimits (3, 0, 10000 );//scale
-        f_peak->SetParLimits (4, 20, 50); // turn-on time
+        f_peak->SetParLimits (3, 0, 12000 );//scale
+        f_peak->SetParLimits (4, 35, 55); // turn-on time
         f_peak->SetParLimits (5, 0, 3); // scale
 
         // set initial parameters
-        f_peak->SetParameters (1, 50, 0, 5600, 40, 0.8);
+        f_peak->SetParameters (1, 50, cBaseline, 8000, cTurnOn, 0.8);
     }
 
 

@@ -110,7 +110,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     analyze_fileStructure (cDir, cDirTree);
 
     // here crate a new root file with the results and the non fitted histos
-    TFile* cResultFile = new TFile ("Data/Results.root", "UPDATE");
+    TFile* cResultFile = new TFile ("Data/Results.root", "RECREATE");
     TDirectory* cNotFittedDir = cResultFile->mkdir ("NotFitted");
     cResultFile->cd();
     TDirectory* cResultDir;
@@ -213,7 +213,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             pulse_parameters cPulse;
 
             if (pAnalytical)
-                cPulse = analyze_hist_analytical (cHist, true);
+                cPulse = analyze_hist_analytical (cHist, false);
             else
                 cPulse = analyze_hist (cHist);
 
@@ -235,7 +235,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             cStatus->Fill (cPulse.fit_status);
 
             //save the histogram in case it exceeds the Chi2
-            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 6)
+            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 9)
                 cHist->SetDirectory (cNotFittedDir);
         }
 
@@ -277,15 +277,15 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     cResultCanvas->cd (13);
     cStatus->Draw();
 
-    cResultCanvas->SaveAs ("Results.pdf");
+    cResultCanvas->SaveAs ("Results.root");
 
 }
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
-    //TH1F* cPeakBefore = getHist ("Peak_after", 9);
-    //analyze_hist_analytical (cPeakBefore, true);
+    loop_histograms ("Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root");
+    //TH1F* cPeakBefore = getHist ("Peak_after", 6);
+    //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
     //testcanvas->cd();
     //cPeakBefore->Draw ("PE X0");
