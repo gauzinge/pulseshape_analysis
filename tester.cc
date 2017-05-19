@@ -88,6 +88,10 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
 
 void loop_histograms (std::string pFilename, bool pAnalytical = true)
 {
+    TCanvas* debug = new TCanvas ("debug", "debug");
+    debug->cd();
+    bool cFirst = true;
+
     // open the file an perform a sanity check!
     std::string cPath = pFilename;
     TFile* cFile = TFile::Open (pFilename.c_str() );
@@ -105,6 +109,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     TDirectory* cDir = gDirectory;
     int cCounter = 0;
     int cDirCounter = 0;
+    int cGoodCounter = 0;
+    int cBadCounter = 0;
     // recurse through the directory tree and get a std::set of lowest level Dirs
     std::set<std::string> cDirTree;
     analyze_fileStructure (cDir, cDirTree);
@@ -194,7 +200,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        //if (cDirCounter == 5) break;
+        //if (cDirCounter == 200) break;
 
         std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
@@ -217,32 +223,52 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             else
                 cPulse = analyze_hist (cHist);
 
-            // fill the histograms
-            cTurnOnTime->Fill (cPulse.turn_on_time);
-            cPeakTime->Fill (cPulse.peak_time);
-            cRiseTime->Fill (cPulse.rise_time);
-            cTimeConstant->Fill (cPulse.time_constant);
-            cUndershootTime->Fill (cPulse.undershoot_time);
-            cReturnTime->Fill (cPulse.return_to_baseline);
-
-            cBaseline->Fill (cPulse.baseline);
-            cMaximumAmp->Fill (cPulse.max_pulseheight);
-            cAmplitude->Fill (cPulse.amplitude);
-            cTailAmplitude->Fill (cPulse.tail_amplitude);
-            cUndershootAmplitude->Fill (cPulse.undershoot);
-
-            cChi2->Fill (cPulse.chi2_peak);
-            cStatus->Fill (cPulse.fit_status);
-
             //save the histogram in case it exceeds the Chi2
-            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 9)
+            //and do not fill the summary
+            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 10)
+            {
                 cHist->SetDirectory (cNotFittedDir);
+                cBadCounter++;
+                continue;
+            }
+            else
+            {
+                // fill the histograms
+                cTurnOnTime->Fill (cPulse.turn_on_time);
+                cPeakTime->Fill (cPulse.peak_time);
+                cRiseTime->Fill (cPulse.rise_time);
+                cTimeConstant->Fill (cPulse.time_constant);
+                cUndershootTime->Fill (cPulse.undershoot_time);
+                cReturnTime->Fill (cPulse.return_to_baseline);
+
+                cBaseline->Fill (cPulse.baseline);
+                cMaximumAmp->Fill (cPulse.max_pulseheight);
+                cAmplitude->Fill (cPulse.amplitude);
+                cTailAmplitude->Fill (cPulse.tail_amplitude);
+                cUndershootAmplitude->Fill (cPulse.undershoot);
+
+                cChi2->Fill (cPulse.chi2_peak);
+                cStatus->Fill (cPulse.fit_status);
+                cGoodCounter++;
+            }
+
+            if  (cPulse.max_pulseheight == 2388 || cPulse.tail_amplitude == 361 )
+            {
+                if (cFirst)
+                {
+                    cHist->Draw();
+                    cFirst = false;
+                }
+                else
+                    cHist->Draw ("same");
+            }
         }
 
         cDirCounter++;
     }
 
     std::cout << cCounter << " Histograms in " << cDirCounter << " Directories detected!" << std::endl;
+    std::cout << cGoodCounter << " of which had Chi^2 <10 and " << cDirCounter << " were not successfully fitted!" << std::endl;
 
     cResultFile->Write();
 
