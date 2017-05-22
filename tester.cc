@@ -309,7 +309,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root");
+    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
