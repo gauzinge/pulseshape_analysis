@@ -69,11 +69,14 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
         else if (cObj->IsA()->InheritsFrom ("TH1") )
         {
             std::string cDirPath = pDirectory->GetPath();
+            std::string cName = cObj->GetName();
+            cDirPath += "/" + cName;
+            cDirPath = cDirPath.substr (cDirPath.find (":") );
 
             if (cDirPath.find ("CcuChan") != std::string::npos)
             {
                 if (pDirList.find ("cDirPath") == pDirList.end() )
-                    pDirList.insert (cDirPath);
+                    pDirList.insert (cDirPath );
 
                 //std::cout << cDirPath << std::endl;
             }
@@ -81,43 +84,51 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
             // ok, I am in the deepest level, no more subfolders
             //TH1F* cHist = (TH1F*) cObj;
             // I can stop since I am in the deepest level
-            break;
+            //break;
         }
     }
 }
 
-void loop_histograms (std::string pFilename, bool pAnalytical = true)
+void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnalytical = true)
 {
-    TCanvas* debug = new TCanvas ("debug", "debug");
-    debug->cd();
-    bool cFirst = true;
-
     // open the file an perform a sanity check!
-    std::string cPath = pFilename;
-    TFile* cFile = TFile::Open (pFilename.c_str() );
+    std::string cPath = pFilename1;
+    TFile* cFile1 = TFile::Open (pFilename1.c_str() );
+    TFile* cFile2 = TFile::Open (pFilename2.c_str() );
 
-    if (cFile == nullptr)
+    if (cFile1 == nullptr)
     {
-        std::cout << "Something is wrong, could not open File " << pFilename << std::endl;
+        std::cout << "Something is wrong, could not open File 1 " << pFilename1 << std::endl;
+        exit (1);
+    }
+
+    if (cFile2 == nullptr)
+    {
+        std::cout << "Something is wrong, could not open File 2 " << pFilename2 << std::endl;
         exit (1);
     }
 
     // go in the highest level that is always the same
     cPath += ":/DQMData/SiStrip/ControlView";
-    cFile->cd (cPath.c_str() );
+    cFile1->cd (cPath.c_str() );
     // get the TDirectory object
     TDirectory* cDir = gDirectory;
     int cCounter = 0;
-    int cDirCounter = 0;
     int cGoodCounter = 0;
     int cBadCounter = 0;
     // recurse through the directory tree and get a std::set of lowest level Dirs
+    std::cout << "Analyzing filestructure ..." << std::endl;
     std::set<std::string> cDirTree;
     analyze_fileStructure (cDir, cDirTree);
+    //exit (0);
+
+    std::cout << "Retrieving Histograms!" << std::endl;
 
     // here crate a new root file with the results and the non fitted histos
     TFile* cResultFile = new TFile ("Data/Results.root", "RECREATE");
-    TDirectory* cNotFittedDir = cResultFile->mkdir ("NotFitted");
+    TDirectory* cNotFittedDir1 = cResultFile->mkdir ("NotFitted1");
+    cResultFile->cd();
+    TDirectory* cNotFittedDir2 = cResultFile->mkdir ("NotFitted2");
     cResultFile->cd();
     TDirectory* cResultDir;
     TObject* cTmp = gROOT->FindObject ("Results");
@@ -134,8 +145,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     TH1F* cAmplitude;
     TH1F* cTailAmplitude;
     TH1F* cUndershootAmplitude;
-    TH1F* cChi2;
-    TH1F* cStatus;
+    TH2F* cChi2;
+    TH2F* cStatus;
 
     // if the Results directory exists in the Results file
     if (cTmp)
@@ -156,8 +167,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         cTailAmplitude = (TH1F*) gROOT->FindObject ("h_tail_amplitude");
         cUndershootAmplitude = (TH1F*) gROOT->FindObject ("h_undershoot_amplitude");
 
-        cChi2 = (TH1F*) gROOT->FindObject ("h_chi2");
-        cStatus = (TH1F*) gROOT->FindObject ("h_status");
+        cChi2 = (TH2F*) gROOT->FindObject ("h_chi2");
+        cStatus = (TH2F*) gROOT->FindObject ("h_status");
     }
     // or create them
     else
@@ -165,110 +176,114 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         // in this case I have to result the histograms
         cResultDir = cResultFile->mkdir ("Results");
 
-        cTurnOnTime = new TH1F ("h_turn_on_time", "h_turn_on_time", 300, 20, 50);
+        cTurnOnTime = new TH1F ("h_turn_on_time", "h_turn_on_time", 200, -10, 10);
         cTurnOnTime->SetDirectory (cResultDir);
-        cPeakTime = new TH1F ("h_peak_time", "h_peak_time", 400, 50, 90);
+        cPeakTime = new TH1F ("h_peak_time", "h_peak_time", 400, -20, 20);
         cPeakTime->SetDirectory (cResultDir);
-        cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 450, 15, 60);
+        cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 200, -10, 10);
         cRiseTime->SetDirectory (cResultDir);
-        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 20, 90);
+        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 600, -30, 30);
         cTimeConstant->SetDirectory (cResultDir);
-        cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 80, 140);
+        cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 30, 30);
         cUndershootTime->SetDirectory (cResultDir);
-        cReturnTime = new TH1F ("h_return_time", "h_return_time", 1000, 100, 200);
+        cReturnTime = new TH1F ("h_return_time", "h_return_time", 400, 200, 200);
         cReturnTime->SetDirectory (cResultDir);
 
         // histograms for amplitude
         cBaseline = new TH1F ("h_baseline", "h_baseline", 1000, -500, 500);
         cBaseline->SetDirectory (cResultDir);
-        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 2500, 2000, 4500);
+        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 1000, -500, 500);
         cMaximumAmp->SetDirectory (cResultDir);
-        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 2500, 2000, 4500);
+        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 1000, -500, 500);
         cAmplitude->SetDirectory (cResultDir);
-        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 2000, 0, 2000);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 1600, -800, 800);
         cTailAmplitude->SetDirectory (cResultDir);
-        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 1100, -1000, 100);
+        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 400, -200, 200);
         cUndershootAmplitude->SetDirectory (cResultDir);
 
         // chi2 and status
-        cChi2 = new TH1F ("h_chi2", "h_chi2", 200, 0, 20);
+        cChi2 = new TH2F ("h_chi2", "h_chi2", 200, 0, 20, 200, 0, 20);
         cChi2->SetDirectory (cResultDir);
-        cStatus = new TH1F ("h_status", "h_status", 4, 0, 4);
+        cStatus = new TH2F ("h_status", "h_status", 4, 0, 4, 4, 0, 4);
         cStatus->SetDirectory (cResultDir);
     }
 
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        //if (cDirCounter == 200) break;
+        if (cCounter == 20000) break;
 
-        std::cout << cPath << std::endl;
-        gDirectory->cd (cPath.c_str() );
-        // set the current directory to the path & get a handle
-        TDirectory* cCurrentDir = gDirectory;
+        TH1F* cHist1 = nullptr;
+        TH1F* cHist2 = nullptr;
 
-        // get the list of keys in that directory and iterate them
-        for (auto cKey : *cCurrentDir->GetListOfKeys() )
+        std::string cFullPath1 = pFilename1 + cPath;
+        std::string cFullPath2 = pFilename2 + cPath;
+
+        cFile1->GetObject (cFullPath1.c_str(), cHist1);
+        cFile2->GetObject (cFullPath2.c_str(), cHist2);
+
+        cCounter++;
+
+        //do what we came for !
+        pulse_parameters cPulse1;
+        pulse_parameters cPulse2;
+
+        if (pAnalytical)
         {
-            TH1F* cHist;
-            cCurrentDir->GetObject (cKey->GetName(), cHist);
-            cCounter++;
-            //std::cout << cKey->GetName() << " " << cHist << std::endl;
-
-            //do what we came for !
-            pulse_parameters cPulse;
-
-            if (pAnalytical)
-                cPulse = analyze_hist_analytical (cHist, false);
-            else
-                cPulse = analyze_hist (cHist);
-
-            //save the histogram in case it exceeds the Chi2
-            //and do not fill the summary
-            if (cPulse.fit_status != 0 ||  cPulse.chi2_peak > 10)
-            {
-                cHist->SetDirectory (cNotFittedDir);
-                cBadCounter++;
-                continue;
-            }
-            else
-            {
-                // fill the histograms
-                cTurnOnTime->Fill (cPulse.turn_on_time);
-                cPeakTime->Fill (cPulse.peak_time);
-                cRiseTime->Fill (cPulse.rise_time);
-                cTimeConstant->Fill (cPulse.time_constant);
-                cUndershootTime->Fill (cPulse.undershoot_time);
-                cReturnTime->Fill (cPulse.return_to_baseline);
-
-                cBaseline->Fill (cPulse.baseline);
-                cMaximumAmp->Fill (cPulse.max_pulseheight);
-                cAmplitude->Fill (cPulse.amplitude);
-                cTailAmplitude->Fill (cPulse.tail_amplitude);
-                cUndershootAmplitude->Fill (cPulse.undershoot);
-
-                cChi2->Fill (cPulse.chi2_peak);
-                cStatus->Fill (cPulse.fit_status);
-                cGoodCounter++;
-            }
-
-            if  (cPulse.max_pulseheight == 2388 || cPulse.tail_amplitude == 361 )
-            {
-                if (cFirst)
-                {
-                    cHist->Draw();
-                    cFirst = false;
-                }
-                else
-                    cHist->Draw ("same");
-            }
+            cPulse1 = analyze_hist_analytical (cHist1, false);
+            cPulse2 = analyze_hist_analytical (cHist2, false);
+        }
+        else
+        {
+            cPulse1 = analyze_hist (cHist1);
+            cPulse2 = analyze_hist (cHist2);
         }
 
-        cDirCounter++;
+        //save the histogram in case it exceeds the Chi2
+        //and do not fill the summary
+        bool pulse1good = true;
+        bool pulse2good = true;
+
+        if (cPulse1.fit_status != 0 ||  cPulse1.chi2_peak > 10)
+        {
+            cHist1->SetDirectory (cNotFittedDir1);
+            cBadCounter++;
+            pulse1good = false;
+        }
+
+        if (cPulse2.fit_status != 0 ||  cPulse2.chi2_peak > 10)
+        {
+            cHist2->SetDirectory (cNotFittedDir2);
+            cBadCounter++;
+            pulse2good = false;
+        }
+
+        if (pulse1good && pulse2good)
+        {
+            pulse_parameters cPulse = cPulse1 - cPulse2;
+            // fill the histograms
+            cTurnOnTime->Fill (cPulse.turn_on_time);
+            cPeakTime->Fill (cPulse.peak_time);
+            cRiseTime->Fill (cPulse.rise_time);
+            cTimeConstant->Fill (cPulse.time_constant);
+            cUndershootTime->Fill (cPulse.undershoot_time);
+            cReturnTime->Fill (cPulse.return_to_baseline);
+
+            cBaseline->Fill (cPulse.baseline);
+            cMaximumAmp->Fill (cPulse.max_pulseheight);
+            cAmplitude->Fill (cPulse.amplitude);
+            cTailAmplitude->Fill (cPulse.tail_amplitude);
+            cUndershootAmplitude->Fill (cPulse.undershoot);
+
+            cChi2->Fill (cPulse1.chi2_peak, cPulse2.chi2_peak);
+            cStatus->Fill (cPulse1.fit_status, cPulse2.fit_status);
+            cGoodCounter += 2;
+        }
     }
 
-    std::cout << cCounter << " Histograms in " << cDirCounter << " Directories detected!" << std::endl;
-    std::cout << cGoodCounter << " of which had Chi^2 <10 and " << cDirCounter << " were not successfully fitted!" << std::endl;
+
+    std::cout << cCounter << " Histograms in detected!" << std::endl;
+    std::cout << cGoodCounter << " of which had Chi^2 <10 and " << cBadCounter << " were not successfully fitted!" << std::endl;
 
     cResultFile->Write();
 
@@ -299,9 +314,9 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     cResultCanvas->cd (11);
     cUndershootAmplitude->Draw();
     cResultCanvas->cd (12);
-    cChi2->Draw();
+    cChi2->Draw ("colz");
     cResultCanvas->cd (13);
-    cStatus->Draw();
+    cStatus->Draw ("colz");
 
     cResultCanvas->SaveAs ("Results.root");
 
@@ -309,7 +324,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
+    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root", "Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root");
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");

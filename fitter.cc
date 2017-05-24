@@ -147,6 +147,31 @@ struct pulse_parameters
 
         std::cout << "***************************************" << std::endl;
     }
+    pulse_parameters operator- (const pulse_parameters& b)
+    {
+        pulse_parameters a;
+        a.peak_mode = this->peak_mode && b.peak_mode;
+        a.turn_on_time = this->turn_on_time - b.turn_on_time;
+        a.peak_time = this->peak_time - b.peak_time;
+        a.rise_time = this->rise_time - b.rise_time;
+        a.time_constant = this->time_constant - b.time_constant;
+        a.undershoot_time = this->undershoot_time - b.undershoot_time;
+        a.return_to_baseline = this->return_to_baseline - b.return_to_baseline;
+
+        a.baseline = this->baseline - b.baseline;
+        a.max_pulseheight = this->max_pulseheight - b.max_pulseheight;
+        a.amplitude = this->amplitude - b.amplitude;
+        a.tail_amplitude = this->tail_amplitude - b.tail_amplitude; //125ns after maximum
+        a.undershoot = this->undershoot - b.undershoot;
+
+        a.chi2_turnon = this->chi2_turnon - b.chi2_turnon;
+        a.chi2_peak = this->chi2_peak - b.chi2_peak;
+        a.chi2_undershoot = this->chi2_undershoot - b.chi2_undershoot;
+        a.fit_status = this->fit_status - b.fit_status;
+        a.fitMode = this->fitMode;
+
+        return a;
+    }
 };
 
 pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
