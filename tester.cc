@@ -2,6 +2,9 @@
 #include "TDirectory.h"
 #include "TKey.h"
 #include "TClass.h"
+#include "TF1.h"
+#include "TCanvas.h"
+#include "TROOT.h"
 
 #include <iostream>
 #include <string>
@@ -171,7 +174,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         cPeakTime->SetDirectory (cResultDir);
         cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 450, 15, 60);
         cRiseTime->SetDirectory (cResultDir);
-        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 20, 90);
+        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 15, 70);
         cTimeConstant->SetDirectory (cResultDir);
         cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 80, 140);
         cUndershootTime->SetDirectory (cResultDir);
@@ -181,11 +184,11 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         // histograms for amplitude
         cBaseline = new TH1F ("h_baseline", "h_baseline", 1000, -500, 500);
         cBaseline->SetDirectory (cResultDir);
-        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 2500, 2000, 4500);
+        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 3000, 1500, 4500);
         cMaximumAmp->SetDirectory (cResultDir);
-        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 2500, 2000, 4500);
+        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 3000, 1500, 4500);
         cAmplitude->SetDirectory (cResultDir);
-        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 2000, 0, 2000);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 240, -120, 120);
         cTailAmplitude->SetDirectory (cResultDir);
         cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 1100, -1000, 100);
         cUndershootAmplitude->SetDirectory (cResultDir);
@@ -200,9 +203,9 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        //if (cDirCounter == 200) break;
+        if (cDirCounter == 100) break;
 
-        std::cout << cPath << std::endl;
+        //std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
         // set the current directory to the path & get a handle
         TDirectory* cCurrentDir = gDirectory;
@@ -252,16 +255,6 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
                 cGoodCounter++;
             }
 
-            if  (cPulse.max_pulseheight == 2388 || cPulse.tail_amplitude == 361 )
-            {
-                if (cFirst)
-                {
-                    cHist->Draw();
-                    cFirst = false;
-                }
-                else
-                    cHist->Draw ("same");
-            }
         }
 
         cDirCounter++;
@@ -309,7 +302,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root");
+    loop_histograms ("Data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root");
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
