@@ -1,11 +1,17 @@
 #include "TFile.h"
+#include "TROOT.h"
+#include "TCanvas.h"
 #include "TDirectory.h"
 #include "TKey.h"
 #include "TClass.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TObject.h"
 
 #include <iostream>
 #include <string>
 #include <set>
+#include <vector>
 
 #include "fitter.cc"
 
@@ -176,33 +182,33 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
         // in this case I have to result the histograms
         cResultDir = cResultFile->mkdir ("Results");
 
-        cTurnOnTime = new TH1F ("h_turn_on_time", "h_turn_on_time", 200, -10, 10);
+        cTurnOnTime = new TH1F ("h_turn_on_time", "h_turn_on_time; t[ns]; counts", 200, -10, 10);
         cTurnOnTime->SetDirectory (cResultDir);
-        cPeakTime = new TH1F ("h_peak_time", "h_peak_time", 400, -20, 20);
+        cPeakTime = new TH1F ("h_peak_time", "h_peak_time; t[ns]; counts", 400, -20, 20);
         cPeakTime->SetDirectory (cResultDir);
-        cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 200, -10, 10);
+        cRiseTime = new TH1F ("h_rise_time", "h_rise_time; t[ns]; counts", 200, -10, 10);
         cRiseTime->SetDirectory (cResultDir);
-        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 600, -30, 30);
+        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant; t[ns]; counts", 600, -30, 30);
         cTimeConstant->SetDirectory (cResultDir);
-        cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 30, 30);
+        cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time; t[ns]; counts", 600, 30, 30);
         cUndershootTime->SetDirectory (cResultDir);
-        cReturnTime = new TH1F ("h_return_time", "h_return_time", 400, 200, 200);
+        cReturnTime = new TH1F ("h_return_time", "h_return_time; t[ns]; counts", 400, 200, 200);
         cReturnTime->SetDirectory (cResultDir);
 
         // histograms for amplitude
-        cBaseline = new TH1F ("h_baseline", "h_baseline", 1000, -500, 500);
+        cBaseline = new TH1F ("h_baseline", "h_baseline; ADC; counts", 1000, -500, 500);
         cBaseline->SetDirectory (cResultDir);
-        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude", 1000, -500, 500);
+        cMaximumAmp = new TH1F ("h_maximum_amplitude", "h_maximum_amplitude; ADC; counts", 1000, -500, 500);
         cMaximumAmp->SetDirectory (cResultDir);
-        cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 1000, -500, 500);
+        cAmplitude = new TH1F ("h_amplitude", "h_amplitude; ADC; counts", 1000, -500, 500);
         cAmplitude->SetDirectory (cResultDir);
-        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 1600, -800, 800);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude; ADC; counts", 1600, -800, 800);
         cTailAmplitude->SetDirectory (cResultDir);
-        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 400, -200, 200);
+        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude; ADC; counts", 400, -200, 200);
         cUndershootAmplitude->SetDirectory (cResultDir);
 
         // chi2 and status
-        cChi2 = new TH2F ("h_chi2", "h_chi2", 200, 0, 20, 200, 0, 20);
+        cChi2 = new TH2F ("h_chi2", "h_chi2, chi^2 before; chi^2 after; counts", 200, 0, 20, 200, 0, 20);
         cChi2->SetDirectory (cResultDir);
         cStatus = new TH2F ("h_status", "h_status", 4, 0, 4, 4, 0, 4);
         cStatus->SetDirectory (cResultDir);
@@ -211,7 +217,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        if (cCounter == 20000) break;
+        //if (cCounter == 8000) break;
 
         TH1F* cHist1 = nullptr;
         TH1F* cHist2 = nullptr;
@@ -260,7 +266,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
 
         if (pulse1good && pulse2good)
         {
-            pulse_parameters cPulse = cPulse1 - cPulse2;
+            pulse_parameters cPulse = cPulse2 - cPulse1;
             // fill the histograms
             cTurnOnTime->Fill (cPulse.turn_on_time);
             cPeakTime->Fill (cPulse.peak_time);
@@ -279,10 +285,12 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
             cStatus->Fill (cPulse1.fit_status, cPulse2.fit_status);
             cGoodCounter += 2;
         }
+
+        if (cCounter % 1000 == 0) std::cout << "Processed " << cCounter << " Histograms of total " << cDirTree.size() * 2 << std::endl;
     }
 
 
-    std::cout << cCounter << " Histograms in detected!" << std::endl;
+    std::cout << cCounter << " Histograms detected!" << std::endl;
     std::cout << cGoodCounter << " of which had Chi^2 <10 and " << cBadCounter << " were not successfully fitted!" << std::endl;
 
     cResultFile->Write();

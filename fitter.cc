@@ -115,38 +115,43 @@ struct pulse_parameters
         }
         else cModeString = "DECONVOLUTION";
 
-        std::cout << "***************************************" << std::endl;
-        std::cout << "PULSESHAPE PARAMETERS: " << cModeString << " Mode" << std::endl;
-        std::cout << "Fit Mode             : " << fitMode << std::endl;
-        std::cout << "***************************************" << std::endl;
-        std::cout << "Turn-on-Time : " << turn_on_time << " ns" << std::endl;
-        std::cout << "Peak-Time    : " << peak_time << " ns" << std::endl;
-        std::cout << "Rise-Time    : " << rise_time << " ns" << std::endl;
-        std::cout << "t_Undershoot : " << undershoot_time << " ns" << std::endl;
-        std::cout << "Back to base : " << return_to_baseline << " ns" << std::endl;
-        std::cout << "Time-Constant: " << time_constant << " ns" << std::endl;
-        std::cout << std::endl;
-        std::cout << "Baseline     : " << baseline << " ADC" << std::endl;
-        std::cout << "Pulseheight  : " << max_pulseheight << " ADC" << std::endl;
-        std::cout << "Amplitude    : " << amplitude << " ADC" << std::endl;
-        std::cout << "Undershoot   : " << undershoot << " ADC" << std::endl;
-        std::cout << "TailAmpli    : " << tail_amplitude << " ADC" << std::endl;
-        std::cout << std::endl;
-
-        if (fitMode == "analytical")
+        if (!true)
         {
-            std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
-            std::cout << "Fit Status   : " << fit_status << std::endl;
-        }
-        else
-        {
-            //std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
-            std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
-            //std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
-        }
 
-        std::cout << "***************************************" << std::endl;
+            std::cout << "***************************************" << std::endl;
+            std::cout << "PULSESHAPE PARAMETERS: " << cModeString << " Mode" << std::endl;
+            std::cout << "Fit Mode             : " << fitMode << std::endl;
+            std::cout << "***************************************" << std::endl;
+            std::cout << "Turn-on-Time : " << turn_on_time << " ns" << std::endl;
+            std::cout << "Peak-Time    : " << peak_time << " ns" << std::endl;
+            std::cout << "Rise-Time    : " << rise_time << " ns" << std::endl;
+            std::cout << "t_Undershoot : " << undershoot_time << " ns" << std::endl;
+            std::cout << "Back to base : " << return_to_baseline << " ns" << std::endl;
+            std::cout << "Time-Constant: " << time_constant << " ns" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Baseline     : " << baseline << " ADC" << std::endl;
+            std::cout << "Pulseheight  : " << max_pulseheight << " ADC" << std::endl;
+            std::cout << "Amplitude    : " << amplitude << " ADC" << std::endl;
+            std::cout << "Undershoot   : " << undershoot << " ADC" << std::endl;
+            std::cout << "TailAmpli    : " << tail_amplitude << " ADC" << std::endl;
+            std::cout << std::endl;
+
+            if (fitMode == "analytical")
+            {
+                std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
+                std::cout << "Fit Status   : " << fit_status << std::endl;
+            }
+            else
+            {
+                //std::cout << "Chi2/NDF TO  : " << chi2_turnon << std::endl;
+                std::cout << "Chi2/NDF PE  : " << chi2_peak << std::endl;
+                //std::cout << "Chi2/NDF US  : " << chi2_undershoot << std::endl;
+            }
+
+            std::cout << "***************************************" << std::endl;
+        }
     }
+
     pulse_parameters operator- (const pulse_parameters& b)
     {
         pulse_parameters a;
@@ -214,7 +219,7 @@ pulse_parameters analyze_hist (TH1* pHist, bool pGaus = false)
     // start 20 ns before the minimum of the peak fit
     float cUndershootLimit = pHist->GetBinCenter (pHist->GetMinimumBin() ) - 20;
 
-    std::cout << cHistName << " maximum time for turn-on: " << cTurnOnLimit << " minimum time for peak: " << cPeakLimit << std::endl;
+    //std::cout << cHistName << " maximum time for turn-on: " << cTurnOnLimit << " minimum time for peak: " << cPeakLimit << std::endl;
 
     // so we have survived rescaling and mode extraction, let's fit some!
 
@@ -369,7 +374,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     double cMaximum = pHist->GetMaximum();
     double cTurnOn = pHist->GetBinCenter ( (pHist->FindFirstBinAbove (0.1 * cMaximum) - 2) );
 
-    std::cout << "DEBUG cBaseline: " << cBaseline << " Turn on : " << cTurnOn << " Maximum " << cMaximum << std::endl;
+    //std::cout << "DEBUG cBaseline: " << cBaseline << " Turn on : " << cTurnOn << " Maximum " << cMaximum << std::endl;
 
 
 
@@ -436,7 +441,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
 
     TFitResultPtr r = pHist->Fit (f_peak, gFitString.c_str() );
     int cFitStatus = r;
-    std::cout << "Fit STATUS: " << cFitStatus << std::endl;
+    //std::cout << "Fit STATUS: " << cFitStatus << std::endl;
 
     // return the point where the turn-on fit = 3% signal.
     float cMaxAmplitude = pHist->GetMaximum();
