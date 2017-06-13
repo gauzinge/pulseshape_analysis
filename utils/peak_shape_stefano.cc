@@ -177,7 +177,7 @@ void make_maxima (double tau)
     for (double x = 1.01; x < 50; x += 0.1)
     {
         y = adjust_maximum (tau, x) ;
-        //myPulse->SetPoint (i++, x, y);
+        myPulse->SetPoint (i++, x, y);
     }
 }
 
@@ -249,7 +249,8 @@ void test()
     //a->Draw();
     double tau = 50;
     make_maxima (tau);
-    //myPulse->Draw ("alp");
+    myPulse->Draw ("alp");
+    a->Draw ("same");
 }
 
 /*

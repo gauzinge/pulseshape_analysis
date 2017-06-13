@@ -7,6 +7,7 @@
 #include "TROOT.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <set>
 
@@ -125,6 +126,9 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     TDirectory* cResultDir;
     TObject* cTmp = gROOT->FindObject ("Results");
 
+    //ofstream object to store the results in tabular form
+    //std::ofstream cTable ("result_table.txt", std::ofstream::out | std::ofstream::trunc);
+
     // 1 histogram for each parameter
     TH1F* cTurnOnTime;
     TH1F* cPeakTime;
@@ -174,7 +178,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
         cPeakTime->SetDirectory (cResultDir);
         cRiseTime = new TH1F ("h_rise_time", "h_rise_time", 450, 15, 60);
         cRiseTime->SetDirectory (cResultDir);
-        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 15, 70);
+        cTimeConstant = new TH1F ("h_time_constant", "h_time_constant", 700, 0, 70);
         cTimeConstant->SetDirectory (cResultDir);
         cUndershootTime = new TH1F ("h_undershoot_time", "h_undershoot_time", 600, 80, 140);
         cUndershootTime->SetDirectory (cResultDir);
@@ -203,7 +207,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        if (cDirCounter == 100) break;
+        //if (cDirCounter == 10) break;
 
         //std::cout << cPath << std::endl;
         gDirectory->cd (cPath.c_str() );
@@ -216,7 +220,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
             TH1F* cHist;
             cCurrentDir->GetObject (cKey->GetName(), cHist);
             cCounter++;
-            //std::cout << cKey->GetName() << " " << cHist << std::endl;
+            //std::string cDetId = cKey->GetName();
+            //std::cout << cKey->GetName() << " " << std::endl;
 
             //do what we came for !
             pulse_parameters cPulse;
@@ -225,6 +230,8 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
                 cPulse = analyze_hist_analytical (cHist, false);
             else
                 cPulse = analyze_hist (cHist);
+
+            //cTable << cDetId << std::setprecision (7) << " " << cPulse.turn_on_time << " " << cPulse.peak_time << " " << cPulse.rise_time << " " << cPulse.time_constant << " " << cPulse.undershoot_time << " " << cPulse.return_to_baseline << " " << cPulse.baseline << " " << cPulse.max_pulseheight << " " << cPulse.amplitude << " " << cPulse.tail_amplitude << " " << cPulse.undershoot << " " << cPulse.chi2_peak << " " << cPulse.fit_status << std::endl;
 
             //save the histogram in case it exceeds the Chi2
             //and do not fill the summary
