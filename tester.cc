@@ -95,7 +95,7 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
     }
 }
 
-void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnalytical = true)
+void loop_histograms (std::string pFilename1, std::string pFilename2, std::string pResultfileName, bool pAnalytical = true)
 {
     // open the file an perform a sanity check!
     std::string cPath = pFilename1;
@@ -131,7 +131,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
     std::cout << "Retrieving Histograms!" << std::endl;
 
     // here crate a new root file with the results and the non fitted histos
-    TFile* cResultFile = new TFile ("Data/Results.root", "RECREATE");
+    TFile* cResultFile = new TFile (pResultfileName.c_str(), "RECREATE");
     TDirectory* cNotFittedDir1 = cResultFile->mkdir ("NotFitted1");
     cResultFile->cd();
     TDirectory* cNotFittedDir2 = cResultFile->mkdir ("NotFitted2");
@@ -217,7 +217,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        //if (cCounter == 8000) break;
+        if (cCounter == 80) break;
 
         TH1F* cHist1 = nullptr;
         TH1F* cHist2 = nullptr;
@@ -297,6 +297,8 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
 
     // create a canvas, divide it and show the histograms
     TCanvas* cResultCanvas = new TCanvas ("Results", "Results", 1000, 1000);
+    //cResultCanvas->SetDirectory (cResultDir);
+
     //cResultCanvas->cd();
     cResultCanvas->Divide (3, 5);
     cResultCanvas->cd (1);
@@ -326,13 +328,19 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, bool pAnal
     cResultCanvas->cd (13);
     cStatus->Draw ("colz");
 
-    cResultCanvas->SaveAs ("Results.root");
+    std::string cPdfName = pResultfileName.substr (0, pResultfileName.find (".root") );
+    cPdfName += ".pdf";
+    cResultCanvas->SaveAs (cPdfName.c_str() );
+    std::cout << cPdfName << std::endl;
+    cResultFile->cd();
+    cResultCanvas->Write ("ResultSummary", TObject::kOverwrite);
+    //cResultFile->Write();
 
 }
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root", "Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root");
+    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root", "Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root", "testme.root");
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
