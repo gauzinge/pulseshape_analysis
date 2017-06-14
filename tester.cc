@@ -316,21 +316,21 @@ void loop_histograms (std::string pFilename, std::string pResultfileName, bool p
 void tester()
 {
     //TOB before
-    std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    std::string file = "../pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
     std::string resultfile = "Results/TOB_before_singel.root";
 
     ////DECO
     ////TECP after
-    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string file = "../pulseshape_data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root";
     //std::string resultfile = "Results/TECP_DECO_after_single.root";
     ////TECM after
-    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string file = "../pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
     //std::string resultfile = "Results/TECM_DECO_after_single.root";
     ////TIB after
-    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string file = "../pulseshape_data/SiStripCommissioningSource_00286106_010.176.005.223_10688_CALCHAN0_000.root";
     //std::string resultfile = "Results/TIB_DECO_after_single.root";
     ////TOB after
-    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string file = "../pulseshape_data/SiStripCommissioningSource_00285789_010.176.005.223_30406_CALCHAN0_000.root";
     //std::string resultfile = "Results/TOB_DECO_after_single.root";
 
     loop_histograms (file, resultfile);
