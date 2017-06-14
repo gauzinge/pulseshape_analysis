@@ -90,7 +90,7 @@ void analyze_fileStructure ( TDirectory* pDirectory, std::set<std::string>& pDir
     }
 }
 
-void loop_histograms (std::string pFilename, bool pAnalytical = true)
+void loop_histograms (std::string pFilename, std::string pResultfileName, bool pAnalytical = true)
 {
     TCanvas* debug = new TCanvas ("debug", "debug");
     debug->cd();
@@ -120,7 +120,7 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     analyze_fileStructure (cDir, cDirTree);
 
     // here crate a new root file with the results and the non fitted histos
-    TFile* cResultFile = new TFile ("Data/Results.root", "RECREATE");
+    TFile* cResultFile = new TFile (pResultfileName.c_str(), "RECREATE");
     TDirectory* cNotFittedDir = cResultFile->mkdir ("NotFitted");
     cResultFile->cd();
     TDirectory* cResultDir;
@@ -303,13 +303,37 @@ void loop_histograms (std::string pFilename, bool pAnalytical = true)
     cResultCanvas->cd (13);
     cStatus->Draw();
 
-    cResultCanvas->SaveAs ("Results.root");
+    std::string cPdfName = pResultfileName.substr (0, pResultfileName.find (".root") );
+    cPdfName += ".pdf";
+    cResultCanvas->SaveAs (cPdfName.c_str() );
+    std::cout << cPdfName << std::endl;
+    cResultFile->cd();
+    cResultCanvas->Write ("ResultSummary", TObject::kOverwrite);
+    //cResultCanvas->SaveAs ("Results.root");
 
 }
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root");
+    //TOB before
+    std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    std::string resultfile = "Results/TOB_before_singel.root";
+
+    ////DECO
+    ////TECP after
+    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string resultfile = "Results/TECP_DECO_after_single.root";
+    ////TECM after
+    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string resultfile = "Results/TECM_DECO_after_single.root";
+    ////TIB after
+    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string resultfile = "Results/TIB_DECO_after_single.root";
+    ////TOB after
+    //std::string file = "../pulseshape_analysis/SiStripCommissioningSource";
+    //std::string resultfile = "Results/TOB_DECO_after_single.root";
+
+    loop_histograms (file, resultfile);
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
