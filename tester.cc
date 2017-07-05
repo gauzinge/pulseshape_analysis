@@ -192,7 +192,7 @@ void loop_histograms (std::string pFilename, std::string pResultfileName, bool p
         cMaximumAmp->SetDirectory (cResultDir);
         cAmplitude = new TH1F ("h_amplitude", "h_amplitude", 3000, 1500, 4500);
         cAmplitude->SetDirectory (cResultDir);
-        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 240, -120, 120);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude", 400, -200, 200);
         cTailAmplitude->SetDirectory (cResultDir);
         cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude", 1100, -1000, 100);
         cUndershootAmplitude->SetDirectory (cResultDir);
@@ -316,16 +316,16 @@ void loop_histograms (std::string pFilename, std::string pResultfileName, bool p
 void tester()
 {
     //TOB before
-    std::string file = "../pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
-    std::string resultfile = "Results/TOB_before_singel.root";
+    //std::string file = "../pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
+    //std::string resultfile = "Results/TOB_before_singel.root";
 
     ////DECO
     ////TECP after
     //std::string file = "../pulseshape_data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root";
     //std::string resultfile = "Results/TECP_DECO_after_single.root";
     ////TECM after
-    //std::string file = "../pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
-    //std::string resultfile = "Results/TECM_DECO_after_single.root";
+    std::string file = "../pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
+    std::string resultfile = "Results/TECM_DECO_after_single.root";
     ////TIB after
     //std::string file = "../pulseshape_data/SiStripCommissioningSource_00286106_010.176.005.223_10688_CALCHAN0_000.root";
     //std::string resultfile = "Results/TIB_DECO_after_single.root";
