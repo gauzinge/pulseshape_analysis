@@ -217,7 +217,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        if (cCounter == 80) break;
+        //if (cCounter == 80) break;
 
         TH1F* cHist1 = nullptr;
         TH1F* cHist2 = nullptr;
@@ -234,56 +234,59 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
         pulse_parameters cPulse1;
         pulse_parameters cPulse2;
 
-        if (pAnalytical)
+        if (cHist1 && cHist2)
         {
-            cPulse1 = analyze_hist_analytical (cHist1, false);
-            cPulse2 = analyze_hist_analytical (cHist2, false);
-        }
-        else
-        {
-            cPulse1 = analyze_hist (cHist1);
-            cPulse2 = analyze_hist (cHist2);
-        }
+            if (pAnalytical)
+            {
+                cPulse1 = analyze_hist_analytical (cHist1, false);
+                cPulse2 = analyze_hist_analytical (cHist2, false);
+            }
+            else
+            {
+                cPulse1 = analyze_hist (cHist1);
+                cPulse2 = analyze_hist (cHist2);
+            }
 
-        //save the histogram in case it exceeds the Chi2
-        //and do not fill the summary
-        bool pulse1good = true;
-        bool pulse2good = true;
+            //save the histogram in case it exceeds the Chi2
+            //and do not fill the summary
+            bool pulse1good = true;
+            bool pulse2good = true;
 
-        if (cPulse1.fit_status != 0 ||  cPulse1.chi2_peak > 10)
-        {
-            cHist1->SetDirectory (cNotFittedDir1);
-            cBadCounter++;
-            pulse1good = false;
-        }
+            if (cPulse1.fit_status != 0 ||  cPulse1.chi2_peak > 10)
+            {
+                cHist1->SetDirectory (cNotFittedDir1);
+                cBadCounter++;
+                pulse1good = false;
+            }
 
-        if (cPulse2.fit_status != 0 ||  cPulse2.chi2_peak > 10)
-        {
-            cHist2->SetDirectory (cNotFittedDir2);
-            cBadCounter++;
-            pulse2good = false;
-        }
+            if (cPulse2.fit_status != 0 ||  cPulse2.chi2_peak > 10)
+            {
+                cHist2->SetDirectory (cNotFittedDir2);
+                cBadCounter++;
+                pulse2good = false;
+            }
 
-        if (pulse1good && pulse2good)
-        {
-            pulse_parameters cPulse = cPulse2 - cPulse1;
-            // fill the histograms
-            cTurnOnTime->Fill (cPulse.turn_on_time);
-            cPeakTime->Fill (cPulse.peak_time);
-            cRiseTime->Fill (cPulse.rise_time);
-            cTimeConstant->Fill (cPulse.time_constant);
-            cUndershootTime->Fill (cPulse.undershoot_time);
-            cReturnTime->Fill (cPulse.return_to_baseline);
+            if (pulse1good && pulse2good)
+            {
+                pulse_parameters cPulse = cPulse2 - cPulse1;
+                // fill the histograms
+                cTurnOnTime->Fill (cPulse.turn_on_time);
+                cPeakTime->Fill (cPulse.peak_time);
+                cRiseTime->Fill (cPulse.rise_time);
+                cTimeConstant->Fill (cPulse.time_constant);
+                cUndershootTime->Fill (cPulse.undershoot_time);
+                cReturnTime->Fill (cPulse.return_to_baseline);
 
-            cBaseline->Fill (cPulse.baseline);
-            cMaximumAmp->Fill (cPulse.max_pulseheight);
-            cAmplitude->Fill (cPulse.amplitude);
-            cTailAmplitude->Fill (cPulse.tail_amplitude);
-            cUndershootAmplitude->Fill (cPulse.undershoot);
+                cBaseline->Fill (cPulse.baseline);
+                cMaximumAmp->Fill (cPulse.max_pulseheight);
+                cAmplitude->Fill (cPulse.amplitude);
+                cTailAmplitude->Fill (cPulse.tail_amplitude);
+                cUndershootAmplitude->Fill (cPulse.undershoot);
 
-            cChi2->Fill (cPulse1.chi2_peak, cPulse2.chi2_peak);
-            cStatus->Fill (cPulse1.fit_status, cPulse2.fit_status);
-            cGoodCounter += 2;
+                cChi2->Fill (cPulse1.chi2_peak, cPulse2.chi2_peak);
+                cStatus->Fill (cPulse1.fit_status, cPulse2.fit_status);
+                cGoodCounter += 2;
+            }
         }
 
         if (cCounter % 1000 == 0) std::cout << "Processed " << cCounter << " Histograms of total " << cDirTree.size() * 2 << std::endl;
@@ -340,7 +343,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_267212_Peak_CALCHAN0_before.root", "Data/SiStripCommissioningSource_285651_Peak_CALCHAN0_after.root", "testme.root");
+    loop_histograms ("Data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root", "Data/SiStripCommissioningSource_00297988_010.176.005.221_20339_CALCHAN0_000.root", "TOB.root");
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
