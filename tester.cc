@@ -288,6 +288,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
                 cGoodCounter += 2;
             }
         }
+        else std::cout << "Error, one of the histograms is null! " << std::endl;
 
         if (cCounter % 1000 == 0) std::cout << "Processed " << cCounter << " Histograms of total " << cDirTree.size() * 2 << std::endl;
     }
@@ -373,7 +374,7 @@ void tester()
     //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00285789_010.176.005.223_30406_CALCHAN0_000.root";
     //std::string cResultFile = "Results/TOB_DECO.root";
 
-    loop_histograms (cBeforeFilse, cAfterFile, cResultFile );
+    loop_histograms (cBeforeFile, cAfterFile, cResultFile );
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
