@@ -343,7 +343,37 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
 
 void tester()
 {
-    loop_histograms ("Data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root", "Data/SiStripCommissioningSource_00297988_010.176.005.221_20339_CALCHAN0_000.root", "TOB.root");
+    //TOB PEAK
+    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
+    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00297988_010.176.005.221_20339_CALCHAN0_000.root";
+    //std::string cResultFile = "Results/TOB.root";
+
+    //TIB PEAK
+    std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298186_010.176.005.223_09452_CALCHAN0_000.root";
+    std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00298126_010.176.005.221_10537_CALCHAN0_000.root";
+    std::string cResultFile = "Results/TIB.root";
+
+    //TECP DECO
+    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298219_010.176.005.223_20992_CALCHAN0_000.root";
+    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root";
+    //std::string cResultFile = "Results/TECP_DECO.root";
+
+    //TECM DECO
+    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298220_010.176.005.223_19980_CALCHAN0_000.root";
+    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
+    //std::string cResultFile = "Results/TECM_DECO.root";
+
+    //TIB DECO
+    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298234_010.176.005.223_10469_CALCHAN0_000.root";
+    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00286106_010.176.005.223_10688_CALCHAN0_000.root";
+    //std::string cResultFile = "Results/TIB_DECO.root";
+
+    //TOB DECO
+    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298218_010.176.005.223_16442_CALCHAN0_000.root";
+    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00285789_010.176.005.223_30406_CALCHAN0_000.root";
+    //std::string cResultFile = "Results/TOB_DECO.root";
+
+    loop_histograms (cBeforeFilse, cAfterFile, cResultFile );
     //TH1F* cPeakBefore = getHist ("Peak_after", 6);
     //analyze_hist_analytical (cPeakBefore, false);
     //TCanvas* testcanvas = new TCanvas ("test", "test");
