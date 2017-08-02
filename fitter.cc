@@ -105,6 +105,9 @@ struct pulse_parameters
         rise_time = peak_time - turn_on_time;
         amplitude = max_pulseheight - baseline;
 
+        //here, compute all amplitudes as percentage of the amplitude
+        tail_amplitude = tail_amplitude / amplitude;
+
         std::string cModeString;
 
         if (peak_mode)
@@ -113,7 +116,11 @@ struct pulse_parameters
             undershoot = 0;
             cModeString = "PEAK";
         }
-        else cModeString = "DECONVOLUTION";
+        else
+        {
+            undershoot = undershoot / amplitude;
+            cModeString = "DECONVOLUTION";
+        }
 
         if (!true)
         {
@@ -347,13 +354,44 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     //or has negative baseline
     pHist->SetMinimum (-600); // to fit the whole pulse, also if it undershoots
 
+
+    // turn on is bin center of 2 bins before 10% maximum
+    double cMaximum = pHist->GetMaximum();
+    int cTurnOnBin = pHist->FindFirstBinAbove (0.1 * cMaximum) - 2;
+    double cTurnOn = pHist->GetBinCenter (cTurnOnBin);
+
+    //now perform common mode subtraction by evaluating the median of the bins before the turn on
+    std::vector<float> cBaselineVec;
+
+    for (int iBin = 1; iBin < cTurnOnBin; iBin++)
+        cBaselineVec.push_back (pHist->GetBinContent (iBin) );
+
+    //now sort
+    std::sort (cBaselineVec.begin(), cBaselineVec.end() );
+    size_t cNBaselineBins = cBaselineVec.size();
+
+    double cMedian = 0;
+
+    if (cNBaselineBins != 0)
+    {
+        if (cNBaselineBins % 2 == 0)
+            cMedian = (cBaselineVec.at (cNBaselineBins / 2. - 1) + cBaselineVec.at (cNBaselineBins / 2.) ) / 2.;
+        else
+            cMedian = cBaselineVec.at (cNBaselineBins / 2.);
+    }
+
+    //std::cout << "Found turn on at " << cTurnOn << " and computed median of the first " << cNBaselineBins << " bins to be " << cMedian << std::endl;
+
     //assign Bin errors
     float noise = 4;
     float N = round (pHist->GetMaximum() / 125.);
     float error = sqrt (2 * N) * noise;
 
     for (int i = 1; i <= pHist->GetNbinsX(); ++i)
+    {
+        pHist->SetBinContent (i, pHist->GetBinContent (i) - cMedian);
         pHist->SetBinError (i, error);
+    }
 
     std::string cHistName = pHist->GetName();
 
@@ -369,10 +407,6 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     pHist->GetXaxis()->SetRange (0, 7);
     double cBaseline = pHist->GetMean (2);
     pHist->GetXaxis()->SetRange();
-
-    // turn on is bin center of 4 bins before 110% baseline
-    double cMaximum = pHist->GetMaximum();
-    double cTurnOn = pHist->GetBinCenter ( (pHist->FindFirstBinAbove (0.1 * cMaximum) - 2) );
 
     //std::cout << "DEBUG cBaseline: " << cBaseline << " Turn on : " << cTurnOn << " Maximum " << cMaximum << std::endl;
 
@@ -447,6 +481,7 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     float cMaxAmplitude = pHist->GetMaximum();
     float time = 5.;
     float base = f_peak->GetMinimum (0, 50);
+    //float base = cMedian;
 
     for (; time < 50 && (f_peak->Eval (time) - base) < 0.01 * (cMaxAmplitude - base); time += 0.1) {}
 
@@ -478,6 +513,8 @@ pulse_parameters analyze_hist_analytical (TH1* pHist, bool pFix_tau)
     }
 
     cPulse.baseline = f_peak->Eval (10);
+    //std::cout << "Baseline " << cPulse.baseline << std::endl;
+    //cPulse.baseline = cMedian;
 
     delete f_peak;
     cPulse.compute();

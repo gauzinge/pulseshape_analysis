@@ -202,9 +202,9 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
         cMaximumAmp->SetDirectory (cResultDir);
         cAmplitude = new TH1F ("h_amplitude", "h_amplitude; ADC; counts", 500, -500, 500);
         cAmplitude->SetDirectory (cResultDir);
-        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude; [rel]; counts", 200, -1, 1);
+        cTailAmplitude = new TH1F ("h_tail_amplitude", "h_tail_amplitude; [rel]; counts", 100, -0.5, 0.5);
         cTailAmplitude->SetDirectory (cResultDir);
-        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude; [rel]; counts", 200, -1, 1);
+        cUndershootAmplitude = new TH1F ("h_undershoot_amplitude", "h_undershoot_amplitude; [rel]; counts", 100, -0.5, 0.5);
         cUndershootAmplitude->SetDirectory (cResultDir);
 
         // chi2 and status
@@ -217,7 +217,7 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
     // iterate the set and extract all the source histos in each subdir
     for (auto cPath : cDirTree)
     {
-        if (cCounter == 800) break;
+        //if (cCounter == 3000) break;
 
         TH1F* cHist1 = nullptr;
         TH1F* cHist2 = nullptr;
@@ -343,41 +343,77 @@ void loop_histograms (std::string pFilename1, std::string pFilename2, std::strin
 
 }
 
-void tester()
+int main (int argc, char** argv)
 {
+    if (argc != 3)
+    {
+        std::cout << "Error, not the right number of arguments -require partition & mode" << std::endl;
+        exit (1);
+    }
+
+    gROOT->SetBatch ( true );
+
+    std::string cPartition = std::string (argv[1]);
+    std::string cMode = std::string (argv[2]);
+    std::cout << cPartition << " " << cMode << std::endl;
+
+    std::string cBeforeFile;
+    std::string cAfterFile;
+    std::string cResultFile;
+
     //TOB PEAK
-    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
-    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00297988_010.176.005.221_20339_CALCHAN0_000.root";
-    //std::string cResultFile = "Results/TOB.root";
+    if (cPartition == "TOB" && cMode == "PEAK")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00267210_010.176.005.187_24361_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00297988_010.176.005.221_20339_CALCHAN0_000.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TOB.root";
+    }
 
     //TIB PEAK
-    //    std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298186_010.176.005.223_09452_CALCHAN0_000.root";
-    //    std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00298126_010.176.005.221_10537_CALCHAN0_000.root";
-    //    std::string cResultFile = "Results/TIB.root";
-    //
+    else if (cPartition == "TIB" && cMode == "PEAK")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298186_010.176.005.223_09452_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298126_010.176.005.221_10537_CALCHAN0_000.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TIB.root";
+    }
+
     //TECP DECO
-    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298219_010.176.005.223_20992_CALCHAN0_000.root";
-    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root";
-    //std::string cResultFile = "Results/TECP_DECO.root";
+    else if (cPartition == "TECP" && cMode == "DECO")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298219_010.176.005.223_20992_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_285786_Deco_CALCHAN0_after.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TECP_DECO.root";
+    }
 
     //TECM DECO
-    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298220_010.176.005.223_19980_CALCHAN0_000.root";
-    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
-    //std::string cResultFile = "Results/TECM_DECO.root";
+    else if (cPartition == "TECP" && cMode == "DECO")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298220_010.176.005.223_19980_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00285787_010.176.005.223_23779_CALCHAN0_000.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TECM_DECO.root";
+    }
 
     //TIB DECO
-    //std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298234_010.176.005.223_10469_CALCHAN0_000.root";
-    //std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00286106_010.176.005.223_10688_CALCHAN0_000.root";
-    //std::string cResultFile = "Results/TIB_DECO.root";
+    else if (cPartition == "TIB" && cMode == "DECO")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298234_010.176.005.223_10469_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00286106_010.176.005.223_10688_CALCHAN0_000.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TIB_DECO.root";
+    }
 
     //TOB DECO
-    std::string cBeforeFile = "../pulseshape_data/SiStripCommissioningSource_00298218_010.176.005.223_16442_CALCHAN0_000.root";
-    std::string cAfterFile = "../pulseshape_data/SiStripCommissioningSource_00285789_010.176.005.223_30406_CALCHAN0_000.root";
-    std::string cResultFile = "Results/TOB_DECO.root";
+    else if (cPartition == "TOB" && cMode == "DECO")
+    {
+        cBeforeFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00298218_010.176.005.223_16442_CALCHAN0_000.root";
+        cAfterFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_data/SiStripCommissioningSource_00285789_010.176.005.223_30406_CALCHAN0_000.root";
+        cResultFile = "/afs/cern.ch/user/g/gauzinge/pulseshape_analysis/Results/TOB_DECO.root";
+    }
+    else
+    {
+        std::cout << "Error, no data for partition " << cPartition << " in mode " << cMode << std::endl;
+        exit (1);
+    }
 
     loop_histograms (cBeforeFile, cAfterFile, cResultFile );
-    //TH1F* cPeakBefore = getHist ("Deco_after", 8); analyze_hist_analytical (cPeakBefore, false);
-    //TCanvas* testcanvas = new TCanvas ("test", "test");
-    //testcanvas->cd();
-    //cPeakBefore->Draw ("PE X0");
+    return 0;
 }
